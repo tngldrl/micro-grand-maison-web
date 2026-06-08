@@ -36,7 +36,10 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(`http://localhost:8000/api/projects/${projectId}`);
+        const token = localStorage.getItem("firebase_token") || "guest"; // Just a fallback, better to use auth.currentUser
+        const res = await fetch(`http://localhost:8000/api/projects/${projectId}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         if (!res.ok) throw new Error("Failed to fetch project data");
         const data = await res.json();
         
@@ -124,7 +127,10 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
     setIsChatLoading(true);
     
     try {
-      const res = await fetch(`http://localhost:8000/api/microservices/${ms.id}/chat`);
+      const token = localStorage.getItem("firebase_token") || "guest";
+      const res = await fetch(`http://localhost:8000/api/microservices/${ms.id}/chat`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setChatMessages(data.messages || []);
@@ -146,9 +152,13 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
     setIsChatLoading(true);
 
     try {
+      const token = localStorage.getItem("firebase_token") || "guest";
       const res = await fetch(`http://localhost:8000/api/microservices/${selectedMs.id}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ message: userMessage })
       });
       if (res.ok) {
