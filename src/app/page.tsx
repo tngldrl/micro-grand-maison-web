@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { auth, GithubAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged, signOut } from "../lib/firebase";
 import type { User } from "firebase/auth";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function Dashboard() {
   const [repoUrls, setRepoUrls] = useState<string[]>(["https://github.com/GoogleCloudPlatform/microservices-demo.git"]);
   const [projectName, setProjectName] = useState("");
@@ -44,7 +46,7 @@ export default function Dashboard() {
     async function fetchProjects() {
       try {
         const token = user && auth && !user.isAnonymous ? await user.getIdToken() : "guest";
-        const res = await fetch("http://localhost:8000/api/projects", {
+        const res = await fetch(`${API_BASE_URL}/api/projects`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
@@ -120,7 +122,7 @@ export default function Dashboard() {
     try {
       const token = user && auth && !user.isAnonymous ? await user.getIdToken() : "guest";
       
-      const res = await fetch("http://localhost:8000/api/projects/analyze", {
+      const res = await fetch(`${API_BASE_URL}/api/projects/analyze`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -144,7 +146,7 @@ export default function Dashboard() {
       // Poll for completion
       const interval = setInterval(async () => {
         try {
-          const pollRes = await fetch(`http://localhost:8000/api/projects/${projectId}`, {
+          const pollRes = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
           if (pollRes.ok) {

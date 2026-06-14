@@ -17,6 +17,8 @@ import "reactflow/dist/style.css";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function ProjectView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
@@ -43,7 +45,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
     async function fetchData() {
       try {
         const token = localStorage.getItem("firebase_token") || "guest"; // Just a fallback, better to use auth.currentUser
-        const res = await fetch(`http://localhost:8000/api/projects/${projectId}`, {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (!res.ok) throw new Error("Failed to fetch project data");
@@ -136,7 +138,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
     
     try {
       const token = localStorage.getItem("firebase_token") || "guest";
-      const res = await fetch(`http://localhost:8000/api/microservices/${ms.id}/chat`, {
+      const res = await fetch(`${API_BASE_URL}/api/microservices/${ms.id}/chat`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -161,7 +163,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
 
     try {
       const token = localStorage.getItem("firebase_token") || "guest";
-      const res = await fetch(`http://localhost:8000/api/microservices/${selectedMs.id}/chat`, {
+      const res = await fetch(`${API_BASE_URL}/api/microservices/${selectedMs.id}/chat`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
