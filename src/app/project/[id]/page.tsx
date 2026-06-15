@@ -74,8 +74,8 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
         }
         
         const initialNodes: Node[] = (data.microservices || []).map((ms: any, index: number) => {
-          const x = (ms.position?.x === 0 && ms.position?.y === 0) ? 100 + (index * 220) : ms.position?.x || 0;
-          const y = (ms.position?.x === 0 && ms.position?.y === 0) ? 100 + ((index % 2) * 150) : ms.position?.y || 0;
+          const x = ms.position?.x ?? 0;
+          const y = ms.position?.y ?? 0;
           
           const { nodeWidth, imageSize, fontSize } = getComponentSizes(ms.scale_tier);
           
