@@ -61,9 +61,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user && !user.isAnonymous && installationId) {
+      const currentUser = user;
       async function saveInstallation() {
         try {
-          const token = await user.getIdToken();
+          const token = await currentUser.getIdToken();
           await fetch(`${API_BASE_URL}/api/github-app/save-installation`, {
             method: "POST",
             headers: {
@@ -82,9 +83,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user && !user.isAnonymous) {
+      const currentUser = user;
       async function fetchInstallUrl() {
         try {
-          const token = await user.getIdToken();
+          const token = await currentUser.getIdToken();
           const res = await fetch(`${API_BASE_URL}/api/github-app/install-url`, {
             headers: { "Authorization": `Bearer ${token}` }
           });
@@ -106,9 +108,10 @@ export default function Dashboard() {
       return;
     }
     
+    const currentUser = user;
     async function fetchProjects() {
       try {
-        const token = user && auth && !user.isAnonymous ? await user.getIdToken() : "guest";
+        const token = currentUser && auth && !currentUser.isAnonymous ? await currentUser.getIdToken() : "guest";
         const res = await fetch(`${API_BASE_URL}/api/projects`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
