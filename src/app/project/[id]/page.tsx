@@ -307,29 +307,35 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
         {selectedMs && (
           <>
             <div className="p-4 border-b border-gray-200 bg-white shadow-sm z-10 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <img src={selectedMs.avatar_image_url} alt={selectedMs.name} className="w-12 h-12 rounded-full bg-black object-cover" />
-                  <div>
-                    <h2 className="font-bold text-gray-800 text-lg leading-tight">{selectedMs.name}</h2>
-                    {selectedRepoUrl && (
-                      <div className="text-xs text-gray-500 mt-1 break-all">
-                        <span className="font-medium text-gray-400 mr-1">Repo:</span>
-                        <a
-                          href={selectedRepoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline font-mono"
-                        >
-                          {selectedRepoUrl}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button onClick={() => setIsDrawerOpen(false)} className="text-gray-400 hover:text-gray-700 p-2 text-2xl font-bold transition-colors">
+              <div className="flex justify-between items-start">
+                <div className="flex-1"></div>
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="text-gray-400 hover:text-gray-700 p-1 text-2xl font-bold transition-colors leading-none"
+                >
                   &times;
                 </button>
+              </div>
+              <div className="flex flex-col items-center -mt-6">
+                <img
+                  src={selectedMs.avatar_chat_image_url || selectedMs.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
+                  alt={selectedMs.name}
+                  className="w-40 h-40 object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-105"
+                />
+                <h2 className="font-bold text-gray-800 text-xl leading-tight mt-3 text-center">{selectedMs.name}</h2>
+                {selectedRepoUrl && (
+                  <div className="text-xs text-gray-500 mt-1.5 break-all text-center">
+                    <span className="font-medium text-gray-400 mr-1">Repo:</span>
+                    <a
+                      href={selectedRepoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline font-mono"
+                    >
+                      {selectedRepoUrl}
+                    </a>
+                  </div>
+                )}
               </div>
               {selectedMs.description && (
                 <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100 whitespace-pre-wrap leading-relaxed">
