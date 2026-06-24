@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, use, MouseEvent as ReactMouseEvent, FormEvent } from "react";
+import { useEffect, useState, useCallback, use, MouseEvent as ReactMouseEvent, FormEvent, memo } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -18,6 +18,47 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+const CanvasBackgroundNode = memo(() => {
+  const kitchenImg = "/kitchen.jpg";
+  const encodedKitchenImg = encodeURI(kitchenImg);
+
+  return (
+    <div
+      className="relative w-full h-full overflow-hidden select-none pointer-events-none bg-slate-50"
+      style={{
+        maskImage: "radial-gradient(circle, black 65%, transparent 95%)",
+        WebkitMaskImage: "radial-gradient(circle, black 65%, transparent 95%)",
+      }}
+    >
+      {/* Kitchen Image (Bottom Right) */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url("${encodedKitchenImg}")`,
+          opacity: 0.6,
+          maskImage: "linear-gradient(135deg, transparent 45%, rgba(0, 0, 0, 0.3) 48%, black 52%)",
+          WebkitMaskImage: "linear-gradient(135deg, transparent 45%, rgba(0, 0, 0, 0.3) 48%, black 52%)",
+        }}
+      />
+      {/* Restaurant Dining Image (Top Left) */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: "url('/hall.jpg')",
+          opacity: 0.6,
+          maskImage: "linear-gradient(135deg, black 48%, rgba(0, 0, 0, 0.3) 52%, transparent 55%)",
+          WebkitMaskImage: "linear-gradient(135deg, black 48%, rgba(0, 0, 0, 0.3) 52%, transparent 55%)",
+        }}
+      />
+    </div>
+  );
+});
+CanvasBackgroundNode.displayName = "CanvasBackgroundNode";
+
+const nodeTypes = {
+  canvasBackground: CanvasBackgroundNode,
+};
 
 const getComponentSizes = (scaleTier?: number) => {
   const tier = scaleTier || 3;
@@ -49,6 +90,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState<string | null>(null);
   const [hasUpdate, setHasUpdate] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [translateExtent, setTranslateExtent] = useState<[[number, number], [number, number]] | undefined>(undefined);
 
   // Chat drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -75,45 +117,84 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
           throw new Error("Project is not ready");
         }
         
-        const initialNodes: Node[] = (data.microservices || []).map((ms: any, index: number) => {
-          const x = ms.position?.x ?? 0;
-          const y = ms.position?.y ?? 0;
-          
-          const { nodeWidth, imageSize, fontSize } = getComponentSizes(ms.scale_tier);
-          
-          return {
-            id: ms.id,
-            position: { x, y },
-            data: {
-              msData: ms, // Store raw data for chat drawer
-              label: (
-                <div className="flex flex-col items-center group cursor-pointer w-full">
-                  <img
-                    src={ms.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
-                    alt={ms.name}
-                    style={{ width: imageSize, height: imageSize }}
-                    className="mb-2 object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.25)] transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_12px_20px_rgba(0,0,0,0.35)]"
-                  />
-                  <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-xl p-2.5 shadow-md flex flex-col items-center w-full transition-all duration-300 group-hover:border-blue-300 group-hover:shadow-lg">
-                    <span className={`font-bold ${fontSize} text-slate-800 text-center line-clamp-1`}>{ms.name}</span>
-                    {ms.description && (
-                      <span className="text-[10px] text-slate-500 text-center mt-1 line-clamp-2 leading-tight">
-                        {ms.description}
-                      </span>
-                    )}
+        const microservicesData = data.microservices || [];
+        const xCoords = microservicesData.map((ms: any) => ms.position?.x ?? 0);
+        const yCoords = microservicesData.map((ms: any) => ms.position?.y ?? 0);
+        const minX = xCoords.length ? Math.min(...xCoords) : 0;
+        const maxX = xCoords.length ? Math.max(...xCoords) : 1000;
+        const minY = yCoords.length ? Math.min(...yCoords) : 0;
+        const maxY = yCoords.length ? Math.max(...yCoords) : 1000;
+
+        const CANVAS_SIZE = 3500;
+        const bgWidth = CANVAS_SIZE;
+        const bgHeight = CANVAS_SIZE;
+        
+        const centerX = xCoords.length ? (Math.min(...xCoords) + Math.max(...xCoords)) / 2 : 500;
+        const centerY = yCoords.length ? (Math.min(...yCoords) + Math.max(...yCoords)) / 2 : 500;
+        
+        const bgX = centerX - bgWidth / 2;
+        const bgY = centerY - bgHeight / 2;
+
+        setTranslateExtent([[bgX, bgY], [bgX + bgWidth, bgY + bgHeight]]);
+
+        const backgroundNode: Node = {
+          id: "canvas-background",
+          type: "canvasBackground",
+          position: { x: bgX, y: bgY },
+          data: {},
+          style: {
+            width: bgWidth,
+            height: bgHeight,
+            zIndex: -10,
+            pointerEvents: "none",
+          },
+          draggable: false,
+          selectable: false,
+          deletable: false,
+        };
+
+        const initialNodes: Node[] = [
+          backgroundNode,
+          ...microservicesData.map((ms: any, index: number) => {
+            const x = ms.position?.x ?? 0;
+            const y = ms.position?.y ?? 0;
+            
+            const { nodeWidth, imageSize, fontSize } = getComponentSizes(ms.scale_tier);
+            
+            return {
+              id: ms.id,
+              position: { x, y },
+              data: {
+                msData: ms, // Store raw data for chat drawer
+                label: (
+                  <div className="flex flex-col items-center group cursor-pointer w-full">
+                    <img
+                      src={ms.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
+                      alt={ms.name}
+                      style={{ width: imageSize, height: imageSize }}
+                      className="mb-2 object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.25)] transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_12px_20px_rgba(0,0,0,0.35)]"
+                    />
+                    <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-xl p-2.5 shadow-md flex flex-col items-center w-full transition-all duration-300 group-hover:border-blue-300 group-hover:shadow-lg">
+                      <span className={`font-bold ${fontSize} text-slate-800 text-center line-clamp-1`}>{ms.name}</span>
+                      {ms.description && (
+                        <span className="text-[10px] text-slate-500 text-center mt-1 line-clamp-2 leading-tight">
+                          {ms.description}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ),
-            },
-            style: {
-              width: nodeWidth,
-              background: "transparent",
-              border: "none",
-              boxShadow: "none",
-              padding: 0,
-            },
-          };
-        });
+                ),
+              },
+              style: {
+                width: nodeWidth,
+                background: "transparent",
+                border: "none",
+                boxShadow: "none",
+                padding: 0,
+              },
+            };
+          })
+        ];
 
         const initialEdges: Edge[] = (data.dependencies || []).map((dep: any) => ({
           id: dep.id,
@@ -294,6 +375,9 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
+          nodeTypes={nodeTypes}
+          translateExtent={translateExtent}
+          nodeExtent={translateExtent}
           fitView
         >
           <Background />
