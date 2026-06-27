@@ -92,6 +92,9 @@ export default function Dashboard() {
   const [adminPassword, setAdminPassword] = useState("");
   const [modalError, setModalError] = useState<string | null>(null);
 
+  const [activeAnalyses, setActiveAnalyses] = useState<{ id: string, name: string, status: string, current_phase: string | null }[]>([]);
+  const [refreshProjectsTrigger, setRefreshProjectsTrigger] = useState(0);
+
   // Project deletion state
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -216,7 +219,90 @@ export default function Dashboard() {
       } catch (err) { console.error("Failed to fetch projects history", err); }
     }
     fetchProjects();
-  }, [user]);
+  }, [user, refreshProjectsTrigger]);
+
+  // Load active analyses from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("active_analyses");
+    if (saved) {
+      try {
+        setActiveAnalyses(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse active analyses", e);
+      }
+    }
+  }, []);
+
+  // Sync active analyses to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("active_analyses", JSON.stringify(activeAnalyses));
+  }, [activeAnalyses]);
+
+  // Poll active analyses statuses
+  useEffect(() => {
+    if (activeAnalyses.length === 0) return;
+    
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      const token = user && auth && !user.isAnonymous ? await user.getIdToken() : "guest";
+      const updated = await Promise.all(activeAnalyses.map(async (analysis) => {
+        if (analysis.status !== "pending" && analysis.status !== "analyzing") {
+          return analysis;
+        }
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/projects/${analysis.id}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status !== analysis.status) {
+              setRefreshProjectsTrigger(prev => prev + 1);
+            }
+            return {
+              id: analysis.id,
+              name: analysis.name || data.name,
+              status: data.status,
+              current_phase: data.current_phase || null
+            };
+          }
+        } catch (e) {
+          console.error("Polling active analysis error", e);
+        }
+        return analysis;
+      }));
+      
+      if (isMounted) {
+        setActiveAnalyses(updated);
+      }
+    }, 3000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [activeAnalyses, user]);
+
+  const handleCancelAnalysis = async (projectId: string) => {
+    try {
+      const token = user && auth && !user.isAnonymous ? await user.getIdToken() : "guest";
+      const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}/cancel`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setActiveAnalyses(prev => prev.map(a => a.id === projectId ? { ...a, status: "cancelled", current_phase: "Cancelled by user" } : a));
+        setRefreshProjectsTrigger(prev => prev + 1);
+      } else {
+        alert("Failed to cancel: " + (await res.text()));
+      }
+    } catch (e: any) {
+      alert("Error cancelling: " + e.message);
+    }
+  };
+
+  const handleDismissAnalysis = (projectId: string) => {
+    setActiveAnalyses(prev => prev.filter(a => a.id !== projectId));
+  };
 
   // ─── News Feed polling ──────────────────────────────────────────────────
 
@@ -419,7 +505,6 @@ export default function Dashboard() {
     const filteredRepos = repositories.filter(r => r.url.trim());
     setLoading(true);
     setError(null);
-    setStatus("Starting analysis...");
     try {
       const token = user && auth && !user.isAnonymous ? await user.getIdToken() : "guest";
       const headers: any = { 
@@ -448,21 +533,24 @@ export default function Dashboard() {
       const data = await res.json();
       const projectId = data.project_id;
 
-      setStatus("Analyzing code and generating avatars (this may take a few minutes)...");
+      // Add to active analyses list for background tracking
+      const finalName = projectName.trim() || `World (${projectId.substring(0, 8)})`;
+      setActiveAnalyses(prev => [
+        ...prev,
+        { id: projectId, name: finalName, status: "pending", current_phase: "Waiting in queue..." }
+      ]);
 
-      const interval = setInterval(async () => {
-        try {
-          const pollRes = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
-            headers: { "Authorization": `Bearer ${token}` },
-          });
-          if (pollRes.ok) {
-            const pollData = await pollRes.json();
-            if (pollData.status === "ready") { clearInterval(interval); router.push(`/project/${projectId}`); }
-            else if (pollData.status === "error") { clearInterval(interval); setError("Analysis failed on the server."); setLoading(false); }
-          }
-        } catch (e) { console.error("Polling error", e); }
-      }, 5000);
-    } catch (err: any) { setError(err.message); setLoading(false); }
+      // Reset form fields immediately so they can create another project
+      setProjectName("");
+      setRepositories([
+        { url: "", webhook_enabled: false, watch_branch: "", has_webhook_access: null, checking_access: false },
+      ]);
+      setRefreshProjectsTrigger(prev => prev + 1);
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -610,6 +698,79 @@ export default function Dashboard() {
         <span className="text-sm text-gray-600">{displayLabel}</span>
         <button onClick={handleLogout} className="text-sm text-red-500 hover:underline">Logout</button>
       </div>
+
+      {/* ── Active Analyses Progress Banner ── */}
+      {activeAnalyses.length > 0 && (
+        <div className="w-full max-w-lg mb-4 space-y-2 z-40">
+          {activeAnalyses.map((analysis) => {
+            const isTerminal = analysis.status === "ready" || analysis.status === "error" || analysis.status === "cancelled";
+            const statusBg = analysis.status === "ready" ? "bg-green-50 border-green-200" :
+                             analysis.status === "error" ? "bg-red-50 border-red-200" :
+                             analysis.status === "cancelled" ? "bg-gray-50 border-gray-200" :
+                             "bg-blue-50 border-blue-200";
+            
+            return (
+              <div key={analysis.id} className={`p-4 rounded-xl border flex flex-col gap-2 shadow-sm transition-all ${statusBg}`}>
+                <div className="flex justify-between items-start gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-gray-800 truncate">
+                      {analysis.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
+                      {(!isTerminal) && (
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                      )}
+                      <span>Status: <strong className="capitalize">{analysis.status}</strong></span>
+                      {analysis.current_phase && (
+                        <span className="text-gray-400">| {analysis.current_phase}</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* View project button if ready */}
+                    {analysis.status === "ready" && (
+                      <button
+                        onClick={() => {
+                          handleDismissAnalysis(analysis.id);
+                          router.push(`/project/${analysis.id}`);
+                        }}
+                        className="text-xs bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                      >
+                        View World
+                      </button>
+                    )}
+                    {/* Cancel button if pending or analyzing */}
+                    {(analysis.status === "pending" || analysis.status === "analyzing") && (
+                      <button
+                        onClick={() => handleCancelAnalysis(analysis.id)}
+                        className="text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-medium px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                    {/* Close/Dismiss button if terminal */}
+                    {isTerminal && (
+                      <button
+                        onClick={() => handleDismissAnalysis(analysis.id)}
+                        className="text-gray-400 hover:text-gray-600 font-bold px-2 py-1 text-sm"
+                        title="Dismiss"
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {/* Progress bar simulation for active state */}
+                {!isTerminal && (
+                  <div className="w-full bg-gray-200/60 rounded-full h-1.5 overflow-hidden mt-1">
+                    <div className="bg-blue-500 h-full animate-pulse" style={{ width: '100%' }}></div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── Main card ── */}
       <div className="bg-white p-8 rounded-xl shadow-lg max-w-lg w-full mt-10">
@@ -762,8 +923,17 @@ export default function Dashboard() {
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
               {projects.map((proj) => (
                 <div key={proj.id}
-                  onClick={() => router.push(`/project/${proj.id}`)}
-                  className="flex justify-between items-center p-3 rounded-lg border border-gray-200 hover:border-blue-500 hover:bg-blue-50/20 cursor-pointer transition-all">
+                  onClick={() => {
+                    if (proj.status === "ready") {
+                      router.push(`/project/${proj.id}`);
+                    }
+                  }}
+                  className={`flex justify-between items-center p-3 rounded-lg border border-gray-200 transition-all ${
+                    proj.status === "ready"
+                      ? "hover:border-blue-500 hover:bg-blue-50/20 cursor-pointer"
+                      : "cursor-default opacity-85"
+                  }`}
+                >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-800 truncate">
@@ -782,9 +952,12 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-50 text-green-700 border border-green-200" :
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${
+                        proj.status === "ready" ? "bg-green-50 text-green-700 border border-green-200" :
                         proj.status === "analyzing" ? "bg-blue-50 text-blue-700 border border-blue-200 animate-pulse" :
-                          "bg-red-50 text-red-700 border border-red-200"
+                        proj.status === "pending" ? "bg-amber-50 text-amber-700 border border-amber-200 animate-pulse" :
+                        proj.status === "cancelled" ? "bg-gray-50 text-gray-600 border border-gray-200" :
+                        "bg-red-50 text-red-700 border border-red-200"
                       }`}>
                       {proj.status}
                     </span>
