@@ -58,6 +58,13 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+async function sha256(message: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -77,6 +84,14 @@ export default function Dashboard() {
   const [installationId, setInstallationId] = useState<string | null>(null);
   const [installUrl, setInstallUrl] = useState<string | null>(null);
 
+  // Admin authentication state
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
+  const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [modalError, setModalError] = useState<string | null>(null);
+
   // News feed state
   const [newsFeedOpen, setNewsFeedOpen] = useState(false);
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
@@ -92,11 +107,31 @@ export default function Dashboard() {
         }
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
 
   // ─── Auth & init ─────────────────────────────────────────────────────────
+
+  const syncUserWithBackend = async (firebaseUser: User, token: string) => {
+    try {
+      const githubUsername = (firebaseUser as any).reloadUserInfo?.screenName || "";
+      const res = await fetch(`${API_BASE_URL}/api/users/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ github_username: githubUsername })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIsAdmin(data.is_admin);
+      }
+    } catch (err) {
+      console.error("Failed to sync user with backend", err);
+    }
+  };
 
   useEffect(() => {
     if (!auth) { setAuthLoading(false); return; }
@@ -105,8 +140,10 @@ export default function Dashboard() {
       if (u && !u.isAnonymous) {
         const token = await u.getIdToken();
         localStorage.setItem("firebase_token", token);
+        await syncUserWithBackend(u, token);
       } else {
         localStorage.setItem("firebase_token", "guest");
+        setIsAdmin(false);
       }
       setAuthLoading(false);
     });
@@ -197,7 +234,7 @@ export default function Dashboard() {
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // ─── Auth handlers ───────────────────────────────────────────────────────
@@ -346,26 +383,52 @@ export default function Dashboard() {
 
   // ─── Generate handler ────────────────────────────────────────────────────
 
-  const handleGenerate = async () => {
-    const filteredRepos = repositories.filter(r => r.url.trim());
-    if (filteredRepos.length === 0) { setError("Please enter at least one repository URL."); return; }
-
-    // Validate webhook settings
-    for (const r of filteredRepos) {
-      if (r.webhook_enabled && !r.watch_branch.trim()) {
-        setError(`Please enter a branch name for update notifications on: ${r.url}`);
-        return;
+  const handleVerifyPassword = async () => {
+    setModalError(null);
+    try {
+      const passwordHash = await sha256(adminPassword);
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const digest = await sha256(passwordHash + timestamp);
+      
+      const res = await fetch(`${API_BASE_URL}/api/admin/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ digest, timestamp })
+      });
+      
+      if (!res.ok) {
+        throw new Error("Invalid password or verification failed");
       }
+      
+      const data = await res.json();
+      setAdminToken(data.token);
+      setShowPasswordModal(false);
+      setAdminPassword("");
+      
+      await startAnalysisWithParams(data.token);
+    } catch (err: any) {
+      setModalError(err.message || "Verification failed");
     }
+  };
 
+  const startAnalysisWithParams = async (tokenForAdmin: string | null) => {
+    const filteredRepos = repositories.filter(r => r.url.trim());
     setLoading(true);
     setError(null);
     setStatus("Starting analysis...");
     try {
       const token = user && auth && !user.isAnonymous ? await user.getIdToken() : "guest";
+      const headers: any = { 
+        "Content-Type": "application/json", 
+        "Authorization": `Bearer ${token}` 
+      };
+      if (isDemo && tokenForAdmin) {
+        headers["X-Admin-Session-Token"] = tokenForAdmin;
+      }
+
       const res = await fetch(`${API_BASE_URL}/api/projects/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        headers: headers,
         body: JSON.stringify({
           repositories: filteredRepos.map(r => ({
             url: r.url.trim(),
@@ -374,6 +437,7 @@ export default function Dashboard() {
           })),
           project_name: projectName.trim() || null,
           github_installation_id: installationId || null,
+          is_demo: isDemo,
         }),
       });
       if (!res.ok) { throw new Error(await res.text()); }
@@ -395,6 +459,26 @@ export default function Dashboard() {
         } catch (e) { console.error("Polling error", e); }
       }, 5000);
     } catch (err: any) { setError(err.message); setLoading(false); }
+  };
+
+  const handleGenerate = async () => {
+    const filteredRepos = repositories.filter(r => r.url.trim());
+    if (filteredRepos.length === 0) { setError("Please enter at least one repository URL."); return; }
+
+    // Validate webhook settings
+    for (const r of filteredRepos) {
+      if (r.webhook_enabled && !r.watch_branch.trim()) {
+        setError(`Please enter a branch name for update notifications on: ${r.url}`);
+        return;
+      }
+    }
+
+    if (isDemo && !adminToken) {
+      setShowPasswordModal(true);
+      return;
+    }
+
+    await startAnalysisWithParams(adminToken);
   };
 
   // ─── Auth screen ─────────────────────────────────────────────────────────
@@ -429,8 +513,8 @@ export default function Dashboard() {
   const githubUsername = user ? (user as any).reloadUserInfo?.screenName : null;
   const displayLabel = user
     ? user.isAnonymous ? "Guest User"
-    : githubUsername ? `GitHub: @${githubUsername}`
-    : (user.displayName || user.email || "GitHub User")
+      : githubUsername ? `GitHub: @${githubUsername}`
+        : (user.displayName || user.email || "GitHub User")
     : "";
 
   // ─── Main dashboard ──────────────────────────────────────────────────────
@@ -609,6 +693,22 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* Demo project checkbox (Admin only) */}
+        {isAdmin && (
+          <div className="mb-5 p-3 rounded-lg border border-blue-100 bg-blue-50/20 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+            <input
+              type="checkbox"
+              id="is-demo-checkbox"
+              checked={isDemo}
+              onChange={(e) => setIsDemo(e.target.checked)}
+              className="w-4 h-4 accent-blue-600 cursor-pointer"
+            />
+            <label htmlFor="is-demo-checkbox" className="text-sm text-blue-950 font-medium cursor-pointer select-none">
+              Register as Demo Project (Public Layout Template)
+            </label>
+          </div>
+        )}
+
         {/* Generate button */}
         <button onClick={handleGenerate} disabled={loading}
           className={`w-full py-3 rounded-md font-medium text-white transition-colors ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
@@ -652,11 +752,10 @@ export default function Dashboard() {
                       {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
                     </div>
                   </div>
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${
-                    proj.status === "ready" ? "bg-green-50 text-green-700 border border-green-200" :
-                    proj.status === "analyzing" ? "bg-blue-50 text-blue-700 border border-blue-200 animate-pulse" :
-                    "bg-red-50 text-red-700 border border-red-200"
-                  }`}>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-50 text-green-700 border border-green-200" :
+                      proj.status === "analyzing" ? "bg-blue-50 text-blue-700 border border-blue-200 animate-pulse" :
+                        "bg-red-50 text-red-700 border border-red-200"
+                    }`}>
                     {proj.status}
                   </span>
                 </div>
@@ -665,6 +764,55 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Premium Glassmorphism Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300">
+          <div className="bg-white/95 border border-gray-150 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">Admin Authentication</h3>
+            <p className="text-xs text-gray-500 mb-4">
+              You are registering a Demo Project (Layout Template). Please enter the admin password to authorize this action.
+            </p>
+            
+            <input
+              type="password"
+              className="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4 bg-white text-gray-900"
+              placeholder="Enter admin password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleVerifyPassword();
+              }}
+              autoFocus
+            />
+
+            {modalError && (
+              <p className="text-xs text-red-500 mb-4 bg-red-50 p-2 rounded-md border border-red-100">{modalError}</p>
+            )}
+
+            <div className="flex justify-end gap-2 text-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setAdminPassword("");
+                  setModalError(null);
+                }}
+                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleVerifyPassword}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
+              >
+                Verify & Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
