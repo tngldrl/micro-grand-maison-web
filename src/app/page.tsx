@@ -367,13 +367,17 @@ export default function Dashboard() {
   };
 
   const handleGuestLogin = async () => {
-    if (!auth) { setUser({ isAnonymous: true, uid: "mock-guest" } as any); return; }
-    try { await signInAnonymously(auth); }
-    catch (err: any) { setError("Guest Login failed: " + err.message); }
+    setUser({ isAnonymous: true, uid: "mock-guest" } as any);
+    localStorage.setItem("firebase_token", "guest");
+    setIsAdmin(false);
   };
 
   const handleLogout = async () => {
-    if (auth) { await signOut(auth); } else { setUser(null); }
+    if (auth) {
+      await signOut(auth);
+    }
+    setUser(null);
+    localStorage.setItem("firebase_token", "guest");
   };
 
   // ─── Repository input handlers ───────────────────────────────────────────
