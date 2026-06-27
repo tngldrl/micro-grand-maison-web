@@ -144,14 +144,27 @@ export default function Dashboard() {
   useEffect(() => {
     if (!auth) { setAuthLoading(false); return; }
     const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u && !u.isAnonymous) {
-        const token = await u.getIdToken();
-        localStorage.setItem("firebase_token", token);
-        await syncUserWithBackend(u, token);
+      if (u) {
+        setUser(u);
+        if (!u.isAnonymous) {
+          const token = await u.getIdToken();
+          localStorage.setItem("firebase_token", token);
+          localStorage.removeItem("guest_mode");
+          await syncUserWithBackend(u, token);
+        } else {
+          localStorage.setItem("firebase_token", "guest");
+          setIsAdmin(false);
+        }
       } else {
-        localStorage.setItem("firebase_token", "guest");
-        setIsAdmin(false);
+        if (localStorage.getItem("guest_mode") === "true") {
+          setUser({ isAnonymous: true, uid: "mock-guest" } as any);
+          localStorage.setItem("firebase_token", "guest");
+          setIsAdmin(false);
+        } else {
+          setUser(null);
+          localStorage.setItem("firebase_token", "guest");
+          setIsAdmin(false);
+        }
       }
       setAuthLoading(false);
     });
@@ -369,6 +382,7 @@ export default function Dashboard() {
   const handleGuestLogin = async () => {
     setUser({ isAnonymous: true, uid: "mock-guest" } as any);
     localStorage.setItem("firebase_token", "guest");
+    localStorage.setItem("guest_mode", "true");
     setIsAdmin(false);
   };
 
@@ -378,6 +392,7 @@ export default function Dashboard() {
     }
     setUser(null);
     localStorage.setItem("firebase_token", "guest");
+    localStorage.removeItem("guest_mode");
   };
 
   // ─── Repository input handlers ───────────────────────────────────────────
