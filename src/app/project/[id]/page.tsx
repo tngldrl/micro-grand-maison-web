@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useMemo, use, MouseEvent as ReactMous
 import ReactFlow, {
   Background,
   Controls,
-  MiniMap,
   Node,
   Edge,
   applyNodeChanges,
@@ -54,6 +53,8 @@ CanvasBackgroundNode.displayName = "CanvasBackgroundNode";
 const nodeTypes = {
   canvasBackground: CanvasBackgroundNode,
 };
+
+const proOptions = { hideAttribution: true };
 
 const getComponentSizes = (scaleTier?: number) => {
   const tier = scaleTier || 3;
@@ -394,6 +395,43 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-black">
       <Header projectName={projectName} />
+      {/* Sub-Header bar */}
+      <div className="w-full bg-slate-950 border-b border-slate-900/60 px-6 py-2.5 flex justify-between items-center z-20 text-xs">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-slate-300">Project:</span>
+            <span className="font-bold text-slate-100 text-sm">{projectName || "Loading..."}</span>
+          </div>
+          <span className="text-slate-800 text-sm self-center">|</span>
+          <Link
+            href="/"
+            className="text-blue-400 hover:text-blue-300 flex items-center gap-1 text-[11px] font-semibold transition-colors"
+          >
+            <span>&larr;</span>
+            <span>Back to Dashboard</span>
+          </Link>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="font-medium text-slate-500">Source Repository:</span>
+          {repositories.length === 0 ? (
+            <span className="text-slate-500 italic">None</span>
+          ) : (
+            <div className="flex items-center gap-3">
+              {repositories.map((repo) => (
+                <a
+                  key={repo.id}
+                  href={repo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 hover:underline font-mono"
+                >
+                  {repo.url}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
       <div className="flex-1 flex overflow-hidden relative">
         {/* Graph Area */}
         <div className={`flex-1 h-full transition-all duration-300 relative ${isDrawerOpen ? 'mr-96' : ''}`}>
@@ -441,6 +479,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
             onNodeMouseEnter={onNodeMouseEnter}
             onNodeMouseLeave={onNodeMouseLeave}
             nodeTypes={nodeTypes}
+            proOptions={proOptions}
             translateExtent={translateExtent}
             nodeExtent={translateExtent}
             minZoom={0.3}
@@ -449,7 +488,6 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
           >
             <Background color="rgba(255, 255, 255, 0.18)" gap={60} size={15} />
             <Controls />
-            <MiniMap />
           </ReactFlow>
         </div>
 

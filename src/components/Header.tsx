@@ -54,6 +54,7 @@ export default function Header({ projectName }: HeaderProps) {
   const [projectNotifications, setProjectNotifications] = useState<any[]>([]);
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
   const [newsFeedOpen, setNewsFeedOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync user state
@@ -193,30 +194,11 @@ export default function Header({ projectName }: HeaderProps) {
 
   return (
     <header className="w-full h-16 bg-slate-900 border-b border-slate-800 px-6 flex justify-between items-center z-30 shadow-sm relative">
-      {/* Left side: Logo or Project Title */}
+      {/* Left side: Logo */}
       <div className="flex items-center gap-3">
         <Link href="/" className="text-xl font-bold text-white hover:opacity-90 transition-opacity">
           Architecture World
         </Link>
-        {isProjectPage && (
-          <div className="flex items-center gap-3">
-            <span className="text-slate-800 text-lg self-center">|</span>
-            <div className="flex flex-col items-start justify-center leading-none py-1">
-              {projectName && (
-                <span className="text-sm font-bold text-slate-200 truncate max-w-[150px] md:max-w-[300px] mb-1" title={projectName}>
-                  {projectName}
-                </span>
-              )}
-              <Link
-                href="/"
-                className="text-blue-400 hover:text-blue-300 flex items-center gap-1 text-[11px] font-medium transition-colors"
-              >
-                <span>&larr;</span>
-                <span>Back to Dashboard</span>
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Right side: Notifications + User profile + Logout */}
@@ -311,21 +293,54 @@ export default function Header({ projectName }: HeaderProps) {
           </div>
         )}
 
-        {/* User profile with GitHub Icon / Guest label */}
-        <span className="text-xl text-slate-300 flex items-center gap-2 font-bold">
-          {user && !user.isAnonymous && githubUsername && (
-            <img src="/github-header.png" alt="GitHub" className="w-7 h-7 object-contain" />
-          )}
-          <span>{displayLabel}</span>
-        </span>
+        {/* User profile dropdown button */}
+        <div className="relative">
+          <button
+            onClick={() => setUserMenuOpen((v) => !v)}
+            className="flex items-center justify-center p-1 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
+            title="User Settings"
+          >
+            {user && !user.isAnonymous && githubUsername ? (
+              <img src="/github-header.png" alt="GitHub" className="w-7 h-7 object-contain" />
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-7 h-7 text-slate-400 hover:text-slate-200"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            )}
+          </button>
 
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="text-xl text-red-400 hover:text-red-300 font-bold hover:underline transition-colors"
-        >
-          Logout
-        </button>
+          {/* User Menu Dropdown */}
+          {userMenuOpen && (
+            <div className="absolute right-0 top-11 w-48 bg-slate-900 rounded-xl shadow-2xl border border-slate-800 z-50 overflow-hidden py-2 flex flex-col">
+              <div className="px-4 py-2 border-b border-slate-800">
+                <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Signed in as</p>
+                <p className="text-sm font-bold text-slate-200 truncate mt-0.5" title={displayLabel}>
+                  {displayLabel}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-slate-800 transition-colors font-semibold"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );

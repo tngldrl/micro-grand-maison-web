@@ -17,6 +17,7 @@ interface Project {
   has_update: boolean;
   is_demo?: boolean;
   created_at: string | null;
+  repositories?: { id: string; url: string }[];
 }
 
 interface RepositoryInput {
@@ -985,7 +986,23 @@ export default function Dashboard() {
                         {proj.name || `World (${proj.id.substring(0, 8)})`}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    {proj.repositories && proj.repositories.length > 0 && (
+                      <div className="flex flex-col gap-0.5 mt-1">
+                        {proj.repositories.map((repo) => (
+                          <a
+                            key={repo.id}
+                            href={repo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs text-blue-400 hover:text-blue-300 hover:underline truncate max-w-[90%] font-mono"
+                          >
+                            {repo.url}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    <div className="text-xs text-slate-500 mt-1">
                       {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
                     </div>
                   </div>
@@ -1035,7 +1052,23 @@ export default function Dashboard() {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    {proj.repositories && proj.repositories.length > 0 && (
+                      <div className="flex flex-col gap-0.5 mt-1">
+                        {proj.repositories.map((repo) => (
+                          <a
+                            key={repo.id}
+                            href={repo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs text-blue-400 hover:text-blue-300 hover:underline truncate max-w-[90%] font-mono"
+                          >
+                            {repo.url}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    <div className="text-xs text-slate-500 mt-1">
                       {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
                     </div>
                   </div>
