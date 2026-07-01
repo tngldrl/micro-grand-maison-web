@@ -74,3 +74,20 @@ body {
   margin-left: 0;
   color: #666;
 }
+
+/* Ensure React Flow edges and edge labels render above background nodes but below interactive character nodes */
+.react-flow__nodes {
+  z-index: auto !important;
+}
+
+.react-flow__edges {
+  z-index: 5 !important;
+}
+
+.react-flow__edge-labels {
+  z-index: 6 !important;
+}
+
+.react-flow__edge-label {
+  z-index: 6 !important;
+}

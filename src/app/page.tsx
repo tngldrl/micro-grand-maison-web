@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth, GithubAuthProvider, signInWithPopup, signInAnonymously, onAuthStateChanged, signOut } from "../lib/firebase";
 import type { User } from "firebase/auth";
+import Header from "../components/Header";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -670,22 +671,23 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-          <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Architecture World</h1>
-          <p className="text-gray-500 text-center mb-8 text-sm">Visualize your microservices as a living ecosystem.</p>
-          <button onClick={handleGitHubLogin} className="w-full bg-gray-900 text-white font-medium py-3 rounded-md mb-4 hover:bg-gray-800 transition-colors flex justify-center items-center gap-2">
+      <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-slate-900 p-8 rounded-xl shadow-2xl max-w-md w-full border border-slate-800">
+          <h1 className="text-3xl font-bold mb-2 text-center text-white">Architecture World</h1>
+          <p className="text-slate-400 text-center mb-8 text-sm">Visualize your microservices as a living ecosystem.</p>
+          <button onClick={handleGitHubLogin} className="w-full bg-white text-slate-950 font-semibold py-3 rounded-md mb-4 hover:bg-slate-100 transition-colors flex justify-center items-center gap-2 shadow-md">
+            <img src="/icons8-github-48.png" alt="GitHub" className="w-5 h-5 object-contain" />
             Sign in with GitHub
           </button>
-          <div className="relative flex py-5 items-center">
-            <div className="flex-grow border-t border-gray-300"></div>
-            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">Or</span>
-            <div className="flex-grow border-t border-gray-300"></div>
+          <div className="relative flex py-4 items-center">
+            <div className="flex-grow border-t border-slate-800"></div>
+            <span className="flex-shrink-0 mx-4 text-slate-500 text-xs uppercase tracking-wider font-semibold">Or</span>
+            <div className="flex-grow border-t border-slate-800"></div>
           </div>
-          <button onClick={handleGuestLogin} className="w-full bg-blue-50 text-blue-600 font-medium py-3 rounded-md border border-blue-200 hover:bg-blue-100 transition-colors">
+          <button onClick={handleGuestLogin} className="w-full bg-blue-950/40 text-blue-400 font-semibold py-3 rounded-md border border-blue-900/50 hover:bg-blue-950/60 transition-colors shadow-sm">
             Try Demo as Guest
           </button>
-          {error && <p className="mt-4 text-red-500 text-sm text-center">{error}</p>}
+          {error && <p className="mt-4 text-red-400 text-sm text-center font-medium">{error}</p>}
         </div>
       </main>
     );
@@ -694,7 +696,7 @@ export default function Dashboard() {
   const githubUsername = user ? (user as any).reloadUserInfo?.screenName : null;
   const displayLabel = user
     ? user.isAnonymous ? "Guest User"
-      : githubUsername ? `GitHub: @${githubUsername}`
+      : githubUsername ? `${githubUsername}`
         : (user.displayName || user.email || "GitHub User")
     : "";
 
@@ -725,123 +727,34 @@ export default function Dashboard() {
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 relative">
-
-      {/* ── Top-right: user info + notifications bell ── */}
-      <div className="absolute top-4 right-4 flex items-center gap-3">
-        {/* Notifications Button (only for logged-in non-guest) */}
-        {user && !user.isAnonymous && (
-          <div className="relative">
-            <button
-              id="news-feed-toggle"
-              onClick={() => setNewsFeedOpen(v => !v)}
-              className="relative p-2 rounded-full hover:bg-gray-200 transition-colors text-gray-600"
-              title="Notifications"
-            >
-              {/* Bell icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              {allNotifications.length > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white"></span>
-              )}
-            </button>
-
-            {/* Notifications Dropdown */}
-            {newsFeedOpen && (
-              <div className="absolute right-0 top-10 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                  <span className="text-sm font-semibold text-gray-800">Notifications</span>
-                  <button onClick={() => setNewsFeedOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg font-bold leading-none">&times;</button>
-                </div>
-                <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
-                  {allNotifications.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center py-8 px-4">
-                      Notifications will appear here when events occur.
-                    </p>
-                  ) : (
-                    allNotifications.map(n => (
-                      <div
-                        key={n.id}
-                        onClick={() => {
-                          if (n.type === "project" && n.status === "ready") {
-                            router.push(`/project/${n.projectId}`);
-                            setNewsFeedOpen(false);
-                          }
-                        }}
-                        className={`px-4 py-3 hover:bg-gray-50 transition-colors flex gap-2 items-start ${
-                          n.type === "project" && n.status === "ready" ? "cursor-pointer" : ""
-                        }`}
-                      >
-                        {/* Status Icon Indicator */}
-                        <div className="mt-0.5 flex-shrink-0">
-                          {n.type === "git" && (
-                            <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" title="Git Push"></span>
-                          )}
-                          {n.type === "project" && n.status === "ready" && (
-                            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" title="Success"></span>
-                          )}
-                          {n.type === "project" && n.status === "error" && (
-                            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" title="Failed"></span>
-                          )}
-                        </div>
-
-                        {/* Content */}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-gray-700 truncate">{n.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {n.message}
-                          </p>
-                          <span className="text-[10px] text-gray-400 block mt-1">{timeAgo(n.timestamp)}</span>
-                        </div>
-
-                        {/* Close / Dismiss Action for Project Notifications */}
-                        {n.type === "project" && (
-                          <button
-                            onClick={(e) => handleRemoveProjectNotification(n.id, e)}
-                            className="text-gray-400 hover:text-red-500 text-xs px-1 font-bold leading-none self-center hover:bg-gray-100 rounded p-1 transition-colors"
-                            title="Dismiss Notification"
-                          >
-                            &times;
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        <span className="text-sm text-gray-600">{displayLabel}</span>
-        <button onClick={handleLogout} className="text-sm text-red-500 hover:underline">Logout</button>
-      </div>
+    <div className="min-h-screen bg-slate-950 flex flex-col w-full">
+      <Header />
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative">
 
       {/* ── Active Analyses Progress Banner ── */}
       {activeAnalyses.length > 0 && (
         <div className="w-full max-w-lg mb-4 space-y-2 z-40">
           {activeAnalyses.map((analysis) => {
             const isTerminal = analysis.status === "ready" || analysis.status === "error" || analysis.status === "cancelled";
-            const statusBg = analysis.status === "ready" ? "bg-green-50 border-green-200" :
-              analysis.status === "error" ? "bg-red-50 border-red-200" :
-                analysis.status === "cancelled" ? "bg-gray-50 border-gray-200" :
-                  "bg-blue-50 border-blue-200";
+            const statusBg = analysis.status === "ready" ? "bg-green-950/30 border-green-900/50 text-green-300" :
+              analysis.status === "error" ? "bg-red-955/30 border-red-900/50 text-red-300" :
+                analysis.status === "cancelled" ? "bg-slate-800/80 border-slate-700 text-slate-400" :
+                  "bg-blue-955/30 border-blue-900/50 text-blue-300";
 
             return (
-              <div key={analysis.id} className={`p-4 rounded-xl border flex flex-col gap-2 shadow-sm transition-all ${statusBg}`}>
+              <div key={analysis.id} className={`p-4 rounded-xl border flex flex-col gap-2 shadow-md transition-all ${statusBg}`}>
                 <div className="flex justify-between items-start gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-gray-800 truncate">
+                    <h3 className="text-sm font-semibold text-white truncate">
                       {analysis.name}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5">
+                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
                       {(!isTerminal) && (
                         <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
                       )}
-                      <span>Status: <strong className="capitalize">{analysis.status}</strong></span>
+                      <span>Status: <strong className="capitalize text-slate-200">{analysis.status}</strong></span>
                       {analysis.current_phase && (
-                        <span className="text-gray-400">| {analysis.current_phase}</span>
+                        <span className="text-slate-500">| {analysis.current_phase}</span>
                       )}
                     </p>
                   </div>
@@ -862,7 +775,7 @@ export default function Dashboard() {
                     {(analysis.status === "pending" || analysis.status === "analyzing") && (
                       <button
                         onClick={() => handleCancelAnalysis(analysis.id)}
-                        className="text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-medium px-3 py-1.5 rounded-lg transition-colors"
+                        className="text-xs bg-red-950/40 hover:bg-red-955/60 text-red-400 border border-red-900/50 font-medium px-3 py-1.5 rounded-lg transition-colors"
                       >
                         Cancel
                       </button>
@@ -871,7 +784,7 @@ export default function Dashboard() {
                     {isTerminal && (
                       <button
                         onClick={() => handleDismissAnalysis(analysis.id)}
-                        className="text-gray-400 hover:text-gray-600 font-bold px-2 py-1 text-sm"
+                        className="text-slate-500 hover:text-slate-300 font-bold px-2 py-1 text-sm"
                         title="Dismiss"
                       >
                         &times;
@@ -881,7 +794,7 @@ export default function Dashboard() {
                 </div>
                 {/* Progress bar simulation for active state */}
                 {!isTerminal && (
-                  <div className="w-full bg-gray-200/60 rounded-full h-1.5 overflow-hidden mt-1">
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden mt-1">
                     <div className="bg-blue-500 h-full animate-pulse" style={{ width: '100%' }}></div>
                   </div>
                 )}
@@ -892,18 +805,18 @@ export default function Dashboard() {
       )}
 
       {/* ── Main card ── */}
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-lg w-full mt-10">
-        <h1 className="text-2xl font-bold mb-2 text-center text-gray-800">Architecture as a World</h1>
-        <p className="text-gray-500 text-center mb-6 text-sm">
+      <div className="bg-slate-900 p-8 rounded-xl shadow-2xl max-w-lg w-full mt-10 border border-slate-800">
+        <h1 className="text-2xl font-bold mb-2 text-center text-white">Architecture as a World</h1>
+        <p className="text-slate-400 text-center mb-6 text-sm">
           {user?.isAnonymous
-            ? "Explore microservice templates and chat with service avatars in the demo worlds below."
+            ? "Explore microservice templates and chat with service avatars in the demo projects below."
             : "Enter the GitHub repository clone URLs you want to analyze."}
         </p>
 
         {user?.isAnonymous ? (
-          <div className="p-5 rounded-xl border border-blue-100 bg-blue-50/20 text-center text-sm text-blue-900 mb-6">
-            <p className="font-semibold mb-1">Guest Mode Active</p>
-            <p className="text-xs text-blue-700 leading-relaxed">
+          <div className="p-5 rounded-xl border border-blue-900/50 bg-blue-950/20 text-center text-sm text-blue-300 mb-6">
+            <p className="font-semibold mb-1 text-white">Guest Mode Active</p>
+            <p className="text-xs text-blue-400 leading-relaxed">
               You are signed in as a guest. Project creation is disabled. Please sign in via GitHub to analyze your own repositories.
             </p>
           </div>
@@ -911,26 +824,26 @@ export default function Dashboard() {
           <>
             {/* GitHub App connection */}
             {user && !user.isAnonymous && (
-              <div className="mb-6 p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+              <div className="mb-6 p-4 rounded-xl border border-slate-800 bg-slate-950/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                 <div>
                   {installationId ? (
-                    <div className="flex items-center gap-1.5 text-green-600 font-semibold">
+                    <div className="flex items-center gap-1.5 text-green-400 font-semibold">
                       <span className="w-2 h-2 rounded-full bg-green-500"></span>
                       GitHub App Connected (ID: {installationId})
                     </div>
                   ) : (
-                    <div className="text-gray-500">
+                    <div className="text-slate-400">
                       {installUrl ? "Connect GitHub App to analyze private repositories." : "GitHub App is not configured. Set GITHUB_APP_INSTALL_URL in backend env."}
                     </div>
                   )}
                 </div>
                 {installUrl ? (
                   <a href={installUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white font-medium px-3 py-1.5 rounded-md transition-all self-start sm:self-auto">
+                    className="inline-flex items-center justify-center bg-white hover:bg-slate-100 text-slate-950 font-semibold px-3 py-1.5 rounded-md transition-all self-start sm:self-auto shadow-sm">
                     {installationId ? "Reconnect" : "Connect GitHub App"}
                   </a>
                 ) : (
-                  <button disabled className="inline-flex items-center justify-center bg-gray-300 text-gray-400 font-medium px-3 py-1.5 rounded-md cursor-not-allowed self-start sm:self-auto"
+                  <button disabled className="inline-flex items-center justify-center bg-slate-800 text-slate-500 font-medium px-3 py-1.5 rounded-md cursor-not-allowed self-start sm:self-auto"
                     title="GitHub App is not configured on the API server.">
                     Connect GitHub App
                   </button>
@@ -940,9 +853,9 @@ export default function Dashboard() {
 
             {/* Project name */}
             <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Project Name (Optional)</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Project Name (Optional)</label>
               <input type="text"
-                className="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-950 text-white placeholder-slate-500"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
                 placeholder="My Microservices Project"
@@ -951,28 +864,28 @@ export default function Dashboard() {
 
             {/* Repository URLs with webhook settings */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Repository URLs</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Repository URLs</label>
               {repositories.map((repo, idx) => (
-                <div key={idx} className="mb-4 border border-gray-200 rounded-lg p-3 bg-gray-50/30">
+                <div key={idx} className="mb-4 border border-slate-800 rounded-lg p-3 bg-slate-950/30">
                   {/* URL row */}
                   <div className="flex gap-2 items-center">
                     <input
                       type="text"
-                      className="flex-grow border border-gray-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                      className="flex-grow border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-950 text-white placeholder-slate-500"
                       value={repo.url}
                       onChange={(e) => handleUrlChange(idx, e.target.value)}
                       placeholder="https://github.com/owner/repo.git"
                     />
                     {repositories.length > 1 && (
                       <button type="button" onClick={() => handleRemoveUrl(idx)}
-                        className="text-red-400 hover:text-red-600 font-bold p-2 transition-colors">✕</button>
+                        className="text-red-400 hover:text-red-300 font-bold p-2 transition-colors">✕</button>
                     )}
                   </div>
 
                   {/* Checking indicator */}
                   {repo.checking_access && (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-500">
-                      <span className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400">
+                      <span className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
                       Checking webhook access...
                     </div>
                   )}
@@ -987,7 +900,7 @@ export default function Dashboard() {
                         onChange={(e) => handleWebhookToggle(idx, e.target.checked)}
                         className="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"
                       />
-                      <label htmlFor={`webhook-enabled-${idx}`} className="text-xs text-gray-600 cursor-pointer select-none">
+                      <label htmlFor={`webhook-enabled-${idx}`} className="text-xs text-slate-400 cursor-pointer select-none">
                         Receive update notifications on push
                       </label>
                     </div>
@@ -999,7 +912,7 @@ export default function Dashboard() {
                   >
                     <input
                       type="text"
-                      className="w-full border border-emerald-300 rounded-md p-2 text-xs focus:ring-2 focus:ring-emerald-400 focus:outline-none bg-white placeholder-gray-400"
+                      className="w-full border border-slate-800 rounded-md p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-950 text-white placeholder-slate-600"
                       value={repo.watch_branch}
                       onChange={(e) => handleBranchChange(idx, e.target.value)}
                       placeholder="Branch to monitor (e.g. main)"
@@ -1009,14 +922,14 @@ export default function Dashboard() {
                 </div>
               ))}
               <button type="button" onClick={handleAddUrl}
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 mt-1">
+                className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center gap-1 mt-1">
                 + Add Repository
               </button>
             </div>
 
             {/* Demo project checkbox (Admin only) */}
             {isAdmin && (
-              <div className="mb-5 p-3 rounded-lg border border-blue-100 bg-blue-50/20 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              <div className="mb-5 p-3 rounded-lg border border-blue-900/40 bg-blue-950/20 flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
                 <input
                   type="checkbox"
                   id="is-demo-checkbox"
@@ -1024,7 +937,7 @@ export default function Dashboard() {
                   onChange={(e) => setIsDemo(e.target.checked)}
                   className="w-4 h-4 accent-blue-600 cursor-pointer"
                 />
-                <label htmlFor="is-demo-checkbox" className="text-sm text-blue-950 font-medium cursor-pointer select-none">
+                <label htmlFor="is-demo-checkbox" className="text-sm text-blue-300 font-medium cursor-pointer select-none">
                   Register as Demo Project (Public Layout Template)
                 </label>
               </div>
@@ -1032,27 +945,27 @@ export default function Dashboard() {
 
             {/* Generate button */}
             <button onClick={handleGenerate} disabled={loading}
-              className={`w-full py-3 rounded-md font-medium text-white transition-colors ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
+              className={`w-full py-3 rounded-md font-medium text-white transition-colors ${loading ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
               {loading ? "Processing..." : "Generate World"}
             </button>
 
             {status && loading && (
-              <div className="mt-4 text-sm text-blue-600 text-center flex flex-col items-center animate-pulse">
-                <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+              <div className="mt-4 text-sm text-blue-400 text-center flex flex-col items-center animate-pulse">
+                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
                 {status}
               </div>
             )}
 
             {error && (
-              <div className="mt-4 p-3 bg-red-50 text-red-700 text-sm rounded-md break-words">{error}</div>
+              <div className="mt-4 p-3 bg-red-950/30 border border-red-900/50 text-red-355 text-sm rounded-md break-words">{error}</div>
             )}
           </>
         )}
 
-        {/* Demo Worlds */}
+        {/* Demo Projects */}
         {demoProjects.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Demo Worlds</h2>
+          <div className="mt-8 pt-6 border-t border-slate-800">
+            <h2 className="text-sm font-semibold text-slate-300 mb-3">Demo Projects</h2>
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
               {demoProjects.map((proj) => (
                 <div key={proj.id}
@@ -1061,27 +974,27 @@ export default function Dashboard() {
                       router.push(`/project/${proj.id}`);
                     }
                   }}
-                  className={`flex justify-between items-center p-3 rounded-lg border border-gray-200 transition-all ${proj.status === "ready"
-                      ? "hover:border-blue-500 hover:bg-blue-50/20 cursor-pointer"
+                  className={`flex justify-between items-center p-3 rounded-lg border border-slate-800 transition-all ${proj.status === "ready"
+                      ? "hover:border-blue-500 hover:bg-blue-955/20 cursor-pointer"
                       : "cursor-default opacity-85"
                     }`}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-800 truncate">
+                      <span className="text-sm font-medium text-slate-200 truncate">
                         {proj.name || `World (${proj.id.substring(0, 8)})`}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-400 mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5">
                       {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-50 text-green-700 border border-green-200" :
-                        proj.status === "analyzing" ? "bg-blue-50 text-blue-700 border border-blue-200 animate-pulse" :
-                          proj.status === "pending" ? "bg-amber-50 text-amber-700 border border-amber-200 animate-pulse" :
-                            proj.status === "cancelled" ? "bg-gray-50 text-gray-600 border border-gray-200" :
-                              "bg-red-50 text-red-700 border border-red-200"
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-955/30 text-green-400 border border-green-900/50" :
+                        proj.status === "analyzing" ? "bg-blue-955/30 text-blue-400 border border-blue-900/50 animate-pulse" :
+                          proj.status === "pending" ? "bg-amber-955/30 text-amber-400 border border-amber-900/50 animate-pulse" :
+                            proj.status === "cancelled" ? "bg-slate-800 text-slate-400 border border-slate-700" :
+                              "bg-red-955/30 text-red-400 border border-red-900/50"
                       }`}>
                       {proj.status}
                     </span>
@@ -1092,10 +1005,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Your Past Worlds */}
+        {/* Your Past Projects */}
         {!user?.isAnonymous && personalProjects.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Your Past Worlds</h2>
+          <div className="mt-6 pt-6 border-t border-slate-800">
+            <h2 className="text-sm font-semibold text-slate-300 mb-3">Your Past Projects</h2>
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
               {personalProjects.map((proj) => (
                 <div key={proj.id}
@@ -1104,34 +1017,34 @@ export default function Dashboard() {
                       router.push(`/project/${proj.id}`);
                     }
                   }}
-                  className={`flex justify-between items-center p-3 rounded-lg border border-gray-200 transition-all ${proj.status === "ready"
-                      ? "hover:border-blue-500 hover:bg-blue-50/20 cursor-pointer"
+                  className={`flex justify-between items-center p-3 rounded-lg border border-slate-800 transition-all ${proj.status === "ready"
+                      ? "hover:border-blue-500 hover:bg-blue-955/20 cursor-pointer"
                       : "cursor-default opacity-85"
                     }`}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-800 truncate">
+                      <span className="text-sm font-medium text-slate-200 truncate">
                         {proj.name || `World (${proj.id.substring(0, 8)})`}
                       </span>
                       {/* New Update badge */}
                       {proj.has_update && (
-                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-955/30 text-emerald-400 border border-emerald-900/50">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                           New Update
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-400 mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5">
                       {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-50 text-green-700 border border-green-200" :
-                        proj.status === "analyzing" ? "bg-blue-50 text-blue-700 border border-blue-200 animate-pulse" :
-                          proj.status === "pending" ? "bg-amber-50 text-amber-700 border border-amber-200 animate-pulse" :
-                            proj.status === "cancelled" ? "bg-gray-50 text-gray-600 border border-gray-200" :
-                              "bg-red-50 text-red-700 border border-red-200"
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-955/30 text-green-400 border border-green-900/50" :
+                        proj.status === "analyzing" ? "bg-blue-955/30 text-blue-400 border border-blue-900/50 animate-pulse" :
+                          proj.status === "pending" ? "bg-amber-955/30 text-amber-400 border border-amber-900/50 animate-pulse" :
+                            proj.status === "cancelled" ? "bg-slate-800 text-slate-400 border border-slate-700" :
+                              "bg-red-955/30 text-red-400 border border-red-900/50"
                       }`}>
                       {proj.status}
                     </span>
@@ -1141,7 +1054,7 @@ export default function Dashboard() {
                         e.stopPropagation();
                         handleDeleteClick(proj);
                       }}
-                      className="text-gray-400 hover:text-red-500 p-1.5 rounded-md transition-colors ml-2 flex-shrink-0 hover:bg-gray-100"
+                      className="text-slate-500 hover:text-red-400 p-1.5 rounded-md transition-colors ml-2 flex-shrink-0 hover:bg-slate-800"
                       title="Delete Project"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1158,16 +1071,16 @@ export default function Dashboard() {
 
       {/* Premium Glassmorphism Password Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300">
-          <div className="bg-white/95 border border-gray-150 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-2">Admin Authentication</h3>
-            <p className="text-xs text-gray-500 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+          <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-white mb-2">Admin Authentication</h3>
+            <p className="text-xs text-slate-400 mb-4">
               You are registering a Demo Project (Layout Template). Please enter the admin password to authorize this action.
             </p>
 
             <input
               type="password"
-              className="w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4 bg-white text-gray-900"
+              className="w-full border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4 bg-slate-950 text-white placeholder-slate-650"
               placeholder="Enter admin password"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
@@ -1178,7 +1091,7 @@ export default function Dashboard() {
             />
 
             {modalError && (
-              <p className="text-xs text-red-500 mb-4 bg-red-50 p-2 rounded-md border border-red-100">{modalError}</p>
+              <p className="text-xs text-red-400 mb-4 bg-red-955/30 p-2 rounded-md border border-red-900/50">{modalError}</p>
             )}
 
             <div className="flex justify-end gap-2 text-sm">
@@ -1189,7 +1102,7 @@ export default function Dashboard() {
                   setAdminPassword("");
                   setModalError(null);
                 }}
-                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-md hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-slate-800 text-slate-300 rounded-md hover:bg-slate-800 transition-colors"
               >
                 Cancel
               </button>
@@ -1207,11 +1120,11 @@ export default function Dashboard() {
 
       {/* Premium Glassmorphism Delete Confirmation Modal */}
       {showDeleteModal && projectToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300">
-          <div className="bg-white/95 border border-red-100 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-red-600 mb-2">Delete Project</h3>
-            <p className="text-xs text-gray-500 mb-4 text-left">
-              Are you sure you want to permanently delete project <strong className="text-gray-800">"{projectToDelete.name || `World (${projectToDelete.id.substring(0, 8)})`}"</strong>? This action will permanently remove all associated repositories, microservices, dependencies, GCS avatars, and chat history.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+          <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-bold text-red-500 mb-2">Delete Project</h3>
+            <p className="text-xs text-slate-400 mb-4 text-left">
+              Are you sure you want to permanently delete project <strong className="text-slate-200">"{projectToDelete.name || `World (${projectToDelete.id.substring(0, 8)})`}"</strong>? This action will permanently remove all associated repositories, microservices, dependencies, GCS avatars, and chat history.
             </p>
 
             <div className="flex justify-end gap-2 text-sm">
@@ -1221,7 +1134,7 @@ export default function Dashboard() {
                   setShowDeleteModal(false);
                   setProjectToDelete(null);
                 }}
-                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-md hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-slate-800 text-slate-300 rounded-md hover:bg-slate-800 transition-colors"
               >
                 Cancel
               </button>
@@ -1237,5 +1150,6 @@ export default function Dashboard() {
         </div>
       )}
     </main>
+  </div>
   );
 }
