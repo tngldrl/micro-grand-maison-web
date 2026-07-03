@@ -45,9 +45,11 @@ function timeAgo(dateString: string | null): string {
 
 interface HeaderProps {
   projectName?: string | null;
+  activeTab?: "create" | "projects" | "samples";
+  onTabChange?: (tab: "create" | "projects" | "samples") => void;
 }
 
-export default function Header({ projectName }: HeaderProps) {
+export default function Header({ projectName, activeTab, onTabChange }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
@@ -193,28 +195,85 @@ export default function Header({ projectName }: HeaderProps) {
   const isProjectPage = pathname.startsWith("/project/");
 
   return (
-    <header className="w-full h-16 bg-slate-900 border-b border-slate-800 px-6 flex justify-between items-center z-30 shadow-sm relative">
+    <header className="w-full h-20 bg-slate-900 border-b border-slate-800 px-8 flex justify-between items-center z-30 shadow-sm relative">
       {/* Left side: Logo */}
-      <div className="flex items-center gap-3">
-        <Link href="/" className="text-xl font-bold text-white hover:opacity-90 transition-opacity">
+      <div className="flex items-center gap-4">
+        <Link href="/" className="text-[25px] font-bold text-white hover:opacity-90 transition-opacity">
           Micro Grand Maison
         </Link>
       </div>
 
-      {/* Right side: Notifications + User profile + Logout */}
-      <div className="flex items-center gap-6">
+      {/* Center: Navigation Tabs (Only shown on Dashboard root page when user is logged in) */}
+      {pathname === "/" && onTabChange && activeTab && user && (
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-8 h-full">
+          <button
+            type="button"
+            onClick={() => onTabChange("create")}
+            className={`h-full px-1 text-[17px] font-semibold border-b-2 transition-all flex items-center gap-2.5 ${
+              activeTab === "create"
+                ? "border-blue-500 text-blue-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <img 
+              src="/_i_icon_14903_icon_149030_256.png" 
+              alt="" 
+              className="w-[25px] h-[25px] object-contain" 
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
+            <span>Create Project</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange("projects")}
+            className={`h-full px-1 text-[17px] font-semibold border-b-2 transition-all flex items-center gap-2.5 ${
+              activeTab === "projects"
+                ? "border-blue-500 text-blue-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <img 
+              src="/_i_icon_13536_icon_135360_256.png" 
+              alt="" 
+              className="w-[25px] h-[25px] object-contain" 
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
+            <span>Projects</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange("samples")}
+            className={`h-full px-1 text-[17px] font-semibold border-b-2 transition-all flex items-center gap-2.5 ${
+              activeTab === "samples"
+                ? "border-blue-500 text-blue-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <img 
+              src="/_i_icon_11173_icon_111730_256.png" 
+              alt="" 
+              className="w-[25px] h-[25px] object-contain" 
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
+            <span>Samples</span>
+          </button>
+        </div>
+      )}
+
+      {/* Right side: Notifications + User profile */}
+      <div className="flex items-center gap-8">
         {/* Notifications Bell */}
         {user && !user.isAnonymous && (
           <div className="relative">
             <button
               id="header-news-feed-toggle"
               onClick={() => setNewsFeedOpen((v) => !v)}
-              className="relative p-2 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
+              className="relative p-2.5 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
               title="Notifications"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-7 h-7"
+                className="w-[34px] h-[34px]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -227,13 +286,13 @@ export default function Header({ projectName }: HeaderProps) {
                 />
               </svg>
               {allNotifications.length > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-slate-900"></span>
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border border-slate-900"></span>
               )}
             </button>
 
             {/* Notifications Dropdown */}
             {newsFeedOpen && (
-              <div className="absolute right-0 top-11 w-80 bg-slate-900 rounded-xl shadow-2xl border border-slate-800 z-50 overflow-hidden">
+              <div className="absolute right-0 top-15 w-[384px] bg-slate-900 rounded-xl shadow-2xl border border-slate-800 z-50 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
                   <span className="text-sm font-semibold text-slate-100">Notifications</span>
                   <button
@@ -296,15 +355,15 @@ export default function Header({ projectName }: HeaderProps) {
         <div className="relative">
           <button
             onClick={() => setUserMenuOpen((v) => !v)}
-            className="flex items-center justify-center p-1 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
+            className="flex items-center justify-center p-1.5 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-200"
             title="User Settings"
           >
             {user && !user.isAnonymous && githubUsername ? (
-              <img src="/github-header.png" alt="GitHub" className="w-7 h-7 object-contain" />
+              <img src="/github-header.png" alt="GitHub" className="w-[34px] h-[34px] object-contain" />
             ) : (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-7 h-7 text-slate-400 hover:text-slate-200"
+                className="w-[34px] h-[34px] text-slate-400 hover:text-slate-200"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -321,7 +380,7 @@ export default function Header({ projectName }: HeaderProps) {
 
           {/* User Menu Dropdown */}
           {userMenuOpen && (
-            <div className="absolute right-0 top-11 w-48 bg-slate-900 rounded-xl shadow-2xl border border-slate-800 z-50 overflow-hidden py-2 flex flex-col">
+            <div className="absolute right-0 top-15 w-56 bg-slate-900 rounded-xl shadow-2xl border border-slate-800 z-50 overflow-hidden py-2 flex flex-col">
               <div className="px-4 py-2 border-b border-slate-800">
                 <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Signed in as</p>
                 <p className="text-sm font-bold text-slate-200 truncate mt-0.5" title={displayLabel}>

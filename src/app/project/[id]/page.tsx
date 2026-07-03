@@ -36,6 +36,7 @@ const CanvasBackgroundNode = memo(() => {
         className="absolute top-[878px] right-0 w-[2722px] h-[2268px] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: `url("${encodedKitchenImg}")`,
+          opacity: 0.50,
         }}
       />
       {/* Restaurant Dining Image (Top Left) */}
@@ -43,6 +44,7 @@ const CanvasBackgroundNode = memo(() => {
         className="absolute top-[433px] left-0 w-[2722px] h-[2268px] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/Gemini_Generated_Image_dqrkx3dqrkx3dqrk.png')",
+          opacity: 0.50,
         }}
       />
     </div>
@@ -397,76 +399,80 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-black">
       <Header projectName={projectName} />
       {/* Sub-Header bar */}
-      <div className="w-full bg-slate-950 border-b border-slate-900/60 px-6 py-2 flex flex-col justify-center items-start gap-1 z-20 text-xs">
-        {/* Upper line: Project Name & Back to Dashboard */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-300">Project:</span>
-            <span className="font-bold text-slate-100 text-sm">{projectName || "Loading..."}</span>
+      <div className="w-full bg-slate-950 border-b border-slate-900/60 px-6 py-3 flex flex-col justify-center items-start gap-2 z-20 relative">
+        {/* Upper line: Project Name & Source Repository */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="font-bold text-slate-100 text-xl">{projectName || "Loading..."}</span>
+          
+          {repositories.length > 0 && (
+            <span className="text-slate-800 text-lg self-center select-none">|</span>
+          )}
+
+          {/* Source Repository (Single or Accordion for Multiple) */}
+          <div className="text-white text-base">
+            {repositories.length === 0 ? (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-slate-400">Source Repository:</span>
+                <span className="text-slate-500 italic">None</span>
+              </div>
+            ) : repositories.length === 1 ? (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-slate-300">Source Repository:</span>
+                <a
+                  href={repositories[0].url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-slate-250 underline font-mono font-medium"
+                >
+                  {repositories[0].url}
+                </a>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start gap-1 text-sm relative">
+                <button
+                  onClick={() => setRepoAccordionOpen(prev => !prev)}
+                  className="flex items-center gap-1.5 font-medium text-white hover:text-slate-200 transition-colors focus:outline-none"
+                >
+                  <span>Source Repositories ({repositories.length}):</span>
+                  <span className="underline font-semibold flex items-center">
+                    {repoAccordionOpen ? "Hide list ▲" : "Show list ▼"}
+                  </span>
+                </button>
+                {repoAccordionOpen && (
+                  <div className="absolute top-full left-0 mt-2 bg-slate-900 border border-slate-800 rounded-lg p-3 shadow-xl flex flex-col gap-1.5 z-50 min-w-[300px]">
+                    {repositories.map((repo) => (
+                      <a
+                        key={repo.id}
+                        href={repo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white hover:text-slate-200 underline font-mono text-xs break-all text-left"
+                      >
+                        {repo.url}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <span className="text-slate-800 text-sm self-center">|</span>
+        </div>
+
+        {/* Lower line: Back to Dashboard */}
+        <div className="mt-0.5">
           <Link
             href="/"
-            className="text-blue-400 hover:text-blue-300 flex items-center gap-1 text-[11px] font-semibold transition-colors"
+            className="text-blue-400 hover:text-blue-300 flex items-center gap-1.5 text-sm font-semibold transition-colors"
           >
             <span>&larr;</span>
             <span>Back to Dashboard</span>
           </Link>
         </div>
-
-        {/* Lower line: Source Repository (Single or Accordion for Multiple) */}
-        <div className="w-full text-slate-400">
-          {repositories.length === 0 ? (
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="font-medium text-slate-500">Source Repository:</span>
-              <span className="text-slate-500 italic">None</span>
-            </div>
-          ) : repositories.length === 1 ? (
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className="font-medium text-slate-500">Source Repository:</span>
-              <a
-                href={repositories[0].url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 hover:underline font-mono"
-              >
-                {repositories[0].url}
-              </a>
-            </div>
-          ) : (
-            <div className="flex flex-col items-start gap-1 text-[11px]">
-              <button
-                onClick={() => setRepoAccordionOpen(prev => !prev)}
-                className="flex items-center gap-1.5 font-medium text-slate-400 hover:text-slate-200 transition-colors focus:outline-none"
-              >
-                <span>Source Repositories ({repositories.length}):</span>
-                <span className="text-blue-400 hover:underline font-semibold flex items-center">
-                  {repoAccordionOpen ? "Hide list ▲" : "Show list ▼"}
-                </span>
-              </button>
-              {repoAccordionOpen && (
-                <div className="flex flex-col gap-1 pl-4 mt-1 border-l border-slate-800">
-                  {repositories.map((repo) => (
-                    <a
-                      key={repo.id}
-                      href={repo.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 hover:underline font-mono"
-                    >
-                      {repo.url}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
       <div className="flex-1 flex overflow-hidden relative">
         {/* Graph Area */}
         <div className={`flex-1 h-full transition-all duration-300 relative ${isDrawerOpen ? 'mr-96' : ''}`}>
-          
+
           {/* Update Overlay (only for notifications/update button/loading/error) */}
           {(hasUpdate || isReanalyzing || loading || error) && (
             <div className="absolute top-4 left-4 z-10 bg-white p-4 rounded-xl shadow-md border border-gray-100 max-w-xs flex flex-col gap-2">
@@ -480,8 +486,8 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
                     onClick={handleUpdate}
                     disabled={isReanalyzing}
                     className={`flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-semibold transition-all ${isReanalyzing
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-md hover:shadow-emerald-200"
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-md hover:shadow-emerald-200"
                       }`}
                   >
                     {isReanalyzing ? (
@@ -523,194 +529,192 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
         </div>
 
         {/* Chat Drawer */}
-        <div className={`fixed top-16 right-0 w-96 h-[calc(100vh-64px)] bg-slate-900 shadow-2xl border-l border-slate-800 transform transition-transform duration-300 flex flex-col z-40 ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        {selectedMs && (
-          <>
-            <div className="p-4 border-b border-slate-800 bg-slate-900 shadow-sm z-10 flex flex-col gap-3">
-              <div className="flex justify-between items-start">
-                <div className="flex-1"></div>
-                <button
-                  onClick={() => setIsDrawerOpen(false)}
-                  className="text-slate-400 hover:text-slate-200 p-1 text-2xl font-bold transition-colors leading-none"
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="flex flex-col items-center -mt-6">
-                <img
-                  src={selectedMs.avatar_chat_image_url || selectedMs.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
-                  alt={selectedMs.name}
-                  className="w-40 h-40 object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-105"
-                />
-                <h2 className="font-bold text-slate-100 text-xl leading-tight mt-3 text-center">{selectedMs.name}</h2>
-                {selectedRepoUrl && (
-                  <div className="text-xs text-slate-400 mt-1.5 break-all text-center">
-                    <span className="font-medium text-slate-500 mr-1">Repo:</span>
-                    <a
-                      href={selectedRepoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline font-mono"
-                    >
-                      {selectedRepoUrl}
-                    </a>
+        <div className={`fixed top-20 right-0 w-96 h-[calc(100vh-80px)] bg-slate-900 shadow-2xl border-l border-slate-800 transform transition-transform duration-300 flex flex-col z-40 ${isDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          {selectedMs && (
+            <>
+              <div className="p-4 border-b border-slate-800 bg-slate-900 shadow-sm z-10 flex flex-col gap-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1"></div>
+                  <button
+                    onClick={() => setIsDrawerOpen(false)}
+                    className="text-slate-400 hover:text-slate-200 p-1 text-2xl font-bold transition-colors leading-none"
+                  >
+                    &times;
+                  </button>
+                </div>
+                <div className="flex flex-col items-center -mt-6">
+                  <img
+                    src={selectedMs.avatar_chat_image_url || selectedMs.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
+                    alt={selectedMs.name}
+                    className="w-40 h-40 object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] transition-transform duration-300 hover:scale-105"
+                  />
+                  <h2 className="font-bold text-slate-100 text-xl leading-tight mt-3 text-center">{selectedMs.name}</h2>
+                  {selectedRepoUrl && (
+                    <div className="text-xs text-slate-400 mt-1.5 break-all text-center">
+                      <span className="font-medium text-slate-500 mr-1">Repo:</span>
+                      <a
+                        href={selectedRepoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline font-mono"
+                      >
+                        {selectedRepoUrl}
+                      </a>
+                    </div>
+                  )}
+                </div>
+                {selectedMs.description && (
+                  <div className="text-xs text-slate-300 bg-slate-950/40 p-3 rounded-lg border border-slate-800 whitespace-pre-wrap leading-relaxed">
+                    {selectedMs.description}
                   </div>
                 )}
-              </div>
-              {selectedMs.description && (
-                <div className="text-xs text-slate-300 bg-slate-950/40 p-3 rounded-lg border border-slate-800 whitespace-pre-wrap leading-relaxed">
-                  {selectedMs.description}
-                </div>
-              )}
-              {selectedMs.technologies && selectedMs.technologies.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {selectedMs.technologies.map((tech: string, i: number) => (
-                    <span
-                      key={i}
-                      className="px-2 py-0.5 text-[10px] font-medium text-slate-400 bg-slate-850/50 border border-slate-800 rounded-md transition-colors hover:bg-slate-800 hover:text-slate-200"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              )}
+                {selectedMs.technologies && selectedMs.technologies.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {selectedMs.technologies.map((tech: string, i: number) => (
+                      <span
+                        key={i}
+                        className="px-2 py-0.5 text-[10px] font-medium text-slate-400 bg-slate-850/50 border border-slate-800 rounded-md transition-colors hover:bg-slate-800 hover:text-slate-200"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-              {/* Tab Corner */}
-              <div className="flex border-t border-slate-800 -mx-4 -mb-4 mt-2">
-                <button
-                  onClick={() => setActiveTab("chat")}
-                  className={`flex-1 py-2.5 text-sm font-semibold text-center border-b-2 transition-all ${
-                    activeTab === "chat"
+                {/* Tab Corner */}
+                <div className="flex border-t border-slate-800 -mx-4 -mb-4 mt-2">
+                  <button
+                    onClick={() => setActiveTab("chat")}
+                    className={`flex-1 py-2.5 text-sm font-semibold text-center border-b-2 transition-all ${activeTab === "chat"
                       ? "border-blue-500 text-blue-400 bg-blue-955/20"
                       : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-850/50"
-                  }`}
-                >
-                  Chat
-                </button>
-                <button
-                  onClick={() => setActiveTab("relations")}
-                  className={`flex-1 py-2.5 text-sm font-semibold text-center border-b-2 transition-all ${
-                    activeTab === "relations"
+                      }`}
+                  >
+                    Chat
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("relations")}
+                    className={`flex-1 py-2.5 text-sm font-semibold text-center border-b-2 transition-all ${activeTab === "relations"
                       ? "border-blue-500 text-blue-400 bg-blue-955/20"
                       : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-850/50"
-                  }`}
-                >
-                  Relations
-                </button>
-              </div>
-            </div>
-
-            {activeTab === "chat" ? (
-              <>
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950">
-                  {chatMessages.length === 0 && !isChatLoading && (
-                    <p className="text-center text-slate-500 text-sm mt-10">Say hello to the {selectedMs.name} staff!</p>
-                  )}
-                  {chatMessages.map((msg, idx) => (
-                    <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`markdown-body max-w-[80%] rounded-lg p-3 text-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-sm'}`}>
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
-                    </div>
-                  ))}
-                  {isChatLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-slate-900 border border-slate-800 text-slate-400 rounded-lg rounded-bl-none p-3 shadow-sm text-sm flex items-center gap-2">
-                        <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                        <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 bg-slate-900 border-t border-slate-800">
-                  <form onSubmit={handleSendMessage} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      placeholder="Ask a question..."
-                      className="flex-1 px-3 py-2 text-sm border border-slate-800 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-950 text-white placeholder-slate-500"
-                      disabled={isChatLoading}
-                    />
-                    <button
-                      type="submit"
-                      disabled={isChatLoading || !chatInput.trim()}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Send
-                    </button>
-                  </form>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-950">
-                {/* Incoming relations */}
-                <div>
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                    &rarr; {selectedMs.name}
-                  </h3>
-                  {relations.incoming.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic pl-2">No incoming connections</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {relations.incoming.map((r) => (
-                        <div
-                          key={r.edgeId}
-                          onClick={() => selectMicroservice(r.ms)}
-                          className="flex items-start gap-3 p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-blue-500/50 hover:shadow-lg cursor-pointer transition-all duration-200"
-                        >
-                          <img
-                            src={r.ms.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
-                            alt={r.ms.name}
-                            className="w-10 h-10 object-contain rounded-full bg-slate-950 border border-slate-800 flex-shrink-0 mt-0.5"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-200 truncate">{r.ms.name}</p>
-                            <p className="text-xs text-slate-400 mt-0.5 whitespace-normal break-words leading-relaxed">{r.relationship}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Outgoing relations */}
-                <div>
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-                    &larr; {selectedMs.name}
-                  </h3>
-                  {relations.outgoing.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic pl-2">No outgoing connections</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {relations.outgoing.map((r) => (
-                        <div
-                          key={r.edgeId}
-                          onClick={() => selectMicroservice(r.ms)}
-                          className="flex items-start gap-3 p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-blue-500/50 hover:shadow-lg cursor-pointer transition-all duration-200"
-                        >
-                          <img
-                            src={r.ms.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
-                            alt={r.ms.name}
-                            className="w-10 h-10 object-contain rounded-full bg-slate-950 border border-slate-800 flex-shrink-0 mt-0.5"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-200 truncate">{r.ms.name}</p>
-                            <p className="text-xs text-slate-400 mt-0.5 whitespace-normal break-words leading-relaxed">{r.relationship}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                      }`}
+                  >
+                    Relations
+                  </button>
                 </div>
               </div>
-            )}
-          </>
-        )}
+
+              {activeTab === "chat" ? (
+                <>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950">
+                    {chatMessages.length === 0 && !isChatLoading && (
+                      <p className="text-center text-slate-500 text-sm mt-10">Say hello to the {selectedMs.name} staff!</p>
+                    )}
+                    {chatMessages.map((msg, idx) => (
+                      <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`markdown-body max-w-[80%] rounded-lg p-3 text-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-sm'}`}>
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      </div>
+                    ))}
+                    {isChatLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-slate-900 border border-slate-800 text-slate-400 rounded-lg rounded-bl-none p-3 shadow-sm text-sm flex items-center gap-2">
+                          <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                          <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4 bg-slate-900 border-t border-slate-800">
+                    <form onSubmit={handleSendMessage} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Ask a question..."
+                        className="flex-1 px-3 py-2 text-sm border border-slate-800 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-950 text-white placeholder-slate-500"
+                        disabled={isChatLoading}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isChatLoading || !chatInput.trim()}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Send
+                      </button>
+                    </form>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-950">
+                  {/* Incoming relations */}
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                      &rarr; {selectedMs.name}
+                    </h3>
+                    {relations.incoming.length === 0 ? (
+                      <p className="text-xs text-slate-500 italic pl-2">No incoming connections</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {relations.incoming.map((r) => (
+                          <div
+                            key={r.edgeId}
+                            onClick={() => selectMicroservice(r.ms)}
+                            className="flex items-start gap-3 p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-blue-500/50 hover:shadow-lg cursor-pointer transition-all duration-200"
+                          >
+                            <img
+                              src={r.ms.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
+                              alt={r.ms.name}
+                              className="w-10 h-10 object-contain rounded-full bg-slate-950 border border-slate-800 flex-shrink-0 mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-bold text-slate-200 truncate">{r.ms.name}</p>
+                              <p className="text-xs text-slate-400 mt-0.5 whitespace-normal break-words leading-relaxed">{r.relationship}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Outgoing relations */}
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                      &larr; {selectedMs.name}
+                    </h3>
+                    {relations.outgoing.length === 0 ? (
+                      <p className="text-xs text-slate-500 italic pl-2">No outgoing connections</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {relations.outgoing.map((r) => (
+                          <div
+                            key={r.edgeId}
+                            onClick={() => selectMicroservice(r.ms)}
+                            className="flex items-start gap-3 p-2.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-blue-500/50 hover:shadow-lg cursor-pointer transition-all duration-200"
+                          >
+                            <img
+                              src={r.ms.avatar_image_url || "https://placehold.co/150/000000/FFFFFF.png?text=?"}
+                              alt={r.ms.name}
+                              className="w-10 h-10 object-contain rounded-full bg-slate-950 border border-slate-800 flex-shrink-0 mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-bold text-slate-200 truncate">{r.ms.name}</p>
+                              <p className="text-xs text-slate-400 mt-0.5 whitespace-normal break-words leading-relaxed">{r.relationship}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
-  </div>
   );
 }
