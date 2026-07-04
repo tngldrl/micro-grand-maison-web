@@ -6,7 +6,15 @@ import { auth, GithubAuthProvider, signInWithPopup, signInAnonymously, onAuthSta
 import type { User } from "firebase/auth";
 import Header from "../components/Header";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const getApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    if (window.location.hostname.endsWith("micro-grandmaison.com")) {
+      return "https://api.micro-grandmaison.com";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+};
+const API_BASE_URL = getApiBaseUrl();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,7 +84,7 @@ const ImagePlaceholder = ({ label, icon, className = "" }: { label: string; icon
     <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:24px_24px] opacity-10" />
     {/* Inner glow */}
     <div className="absolute inset-0 bg-gradient-to-t from-blue-950/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    
+
     <div className="p-4 rounded-full bg-slate-950/50 border border-slate-800/80 text-slate-500 group-hover:text-blue-400 group-hover:border-blue-500/30 transition-all duration-300 shadow-md">
       {icon}
     </div>
@@ -809,11 +817,6 @@ export default function Dashboard() {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <footer className="w-full py-8 border-t border-slate-900/60 bg-slate-950/80 text-center text-xs text-slate-500 z-10 mt-auto">
-          &copy; {new Date().getFullYear()} Micro Grand Maison. All rights reserved.
-        </footer>
       </main>
     );
   }
@@ -856,480 +859,480 @@ export default function Dashboard() {
       <Header activeTab={dashboardTab} onTabChange={setDashboardTab} />
       <main className="flex-1 flex flex-col items-center justify-center p-6 relative">
 
-      {/* ── Active Analyses Progress Banner ── */}
-      {activeAnalyses.length > 0 && (
-        <div className="w-full max-w-lg mb-4 space-y-2 z-40">
-          {activeAnalyses.map((analysis) => {
-            const isTerminal = analysis.status === "ready" || analysis.status === "error" || analysis.status === "cancelled";
-            const statusBg = analysis.status === "ready" ? "bg-green-950/30 border-green-900/50 text-green-300" :
-              analysis.status === "error" ? "bg-red-955/30 border-red-900/50 text-red-300" :
-                analysis.status === "cancelled" ? "bg-slate-800/80 border-slate-700 text-slate-400" :
-                  "bg-blue-955/30 border-blue-900/50 text-blue-300";
+        {/* ── Active Analyses Progress Banner ── */}
+        {activeAnalyses.length > 0 && (
+          <div className="w-full max-w-lg mb-4 space-y-2 z-40">
+            {activeAnalyses.map((analysis) => {
+              const isTerminal = analysis.status === "ready" || analysis.status === "error" || analysis.status === "cancelled";
+              const statusBg = analysis.status === "ready" ? "bg-green-950/30 border-green-900/50 text-green-300" :
+                analysis.status === "error" ? "bg-red-955/30 border-red-900/50 text-red-300" :
+                  analysis.status === "cancelled" ? "bg-slate-800/80 border-slate-700 text-slate-400" :
+                    "bg-blue-955/30 border-blue-900/50 text-blue-300";
 
-            return (
-              <div key={analysis.id} className={`p-4 rounded-xl border flex flex-col gap-2 shadow-md transition-all ${statusBg}`}>
-                <div className="flex justify-between items-start gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold text-white truncate">
-                      {analysis.name}
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-                      {(!isTerminal) && (
-                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                      )}
-                      <span>Status: <strong className="capitalize text-slate-200">{analysis.status}</strong></span>
-                      {analysis.current_phase && (
-                        <span className="text-slate-500">| {analysis.current_phase}</span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* View project button if ready */}
-                    {analysis.status === "ready" && (
-                      <button
-                        onClick={() => {
-                          handleDismissAnalysis(analysis.id);
-                          router.push(`/project/${analysis.id}`);
-                        }}
-                        className="text-xs bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm"
-                      >
-                        View World
-                      </button>
-                    )}
-                    {/* Cancel button if pending or analyzing */}
-                    {(analysis.status === "pending" || analysis.status === "analyzing") && (
-                      <button
-                        onClick={() => handleCancelAnalysis(analysis.id)}
-                        className="text-xs bg-red-950/40 hover:bg-red-955/60 text-red-400 border border-red-900/50 font-medium px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                    {/* Close/Dismiss button if terminal */}
-                    {isTerminal && (
-                      <button
-                        onClick={() => handleDismissAnalysis(analysis.id)}
-                        className="text-slate-500 hover:text-slate-300 font-bold px-2 py-1 text-sm"
-                        title="Dismiss"
-                      >
-                        &times;
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {/* Progress bar simulation for active state */}
-                {!isTerminal && (
-                  <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden mt-1">
-                    <div className="bg-blue-500 h-full animate-pulse" style={{ width: '100%' }}></div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Main card ── */}
-      <div className="bg-slate-900 p-8 rounded-xl shadow-2xl max-w-2xl w-full mt-10 border border-slate-800">
-        <h1 className="text-2xl font-bold mb-2 text-center text-white">Micro Grand Maison</h1>
-        <p className="text-slate-400 text-center mb-6 text-sm">
-          Visualize your microservices as a living ecosystem.
-        </p>
-
-        {/* Tab Contents: Create Project */}
-        {dashboardTab === "create" && (
-          <div className="h-[480px] overflow-y-auto pr-1 flex flex-col justify-between">
-            {user?.isAnonymous ? (
-              <div className="p-5 rounded-xl border border-blue-900/50 bg-blue-950/20 text-center text-sm text-blue-300 my-auto">
-                <p className="font-semibold mb-1 text-white">Guest Mode Active</p>
-                <p className="text-xs text-blue-400 leading-relaxed">
-                  You are signed in as a guest. Project creation is disabled. Please sign in via GitHub to analyze your own repositories.
-                </p>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  {/* GitHub App connection */}
-                  {user && !user.isAnonymous && (
-                    <div className="mb-5 p-4 rounded-xl border border-slate-800 bg-slate-950/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-                      <div>
-                        {installationId ? (
-                          <div className="flex items-center gap-1.5 text-green-400 font-semibold">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                            GitHub App Connected (ID: {installationId})
-                          </div>
-                        ) : (
-                          <div className="text-slate-400">
-                            {installUrl ? "Connect GitHub App to analyze private repositories." : "GitHub App is not configured. Set GITHUB_APP_INSTALL_URL in backend env."}
-                          </div>
+              return (
+                <div key={analysis.id} className={`p-4 rounded-xl border flex flex-col gap-2 shadow-md transition-all ${statusBg}`}>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-semibold text-white truncate">
+                        {analysis.name}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                        {(!isTerminal) && (
+                          <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
                         )}
-                      </div>
-                      {installUrl ? (
-                        <a href={installUrl} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center bg-white hover:bg-slate-100 text-slate-950 font-semibold px-3 py-1.5 rounded-md transition-all self-start sm:self-auto shadow-sm">
-                          {installationId ? "Reconnect" : "Connect GitHub App"}
-                        </a>
-                      ) : (
-                        <button disabled className="inline-flex items-center justify-center bg-slate-800 text-slate-500 font-medium px-3 py-1.5 rounded-md cursor-not-allowed self-start sm:self-auto"
-                          title="GitHub App is not configured on the API server.">
-                          Connect GitHub App
+                        <span>Status: <strong className="capitalize text-slate-200">{analysis.status}</strong></span>
+                        {analysis.current_phase && (
+                          <span className="text-slate-500">| {analysis.current_phase}</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* View project button if ready */}
+                      {analysis.status === "ready" && (
+                        <button
+                          onClick={() => {
+                            handleDismissAnalysis(analysis.id);
+                            router.push(`/project/${analysis.id}`);
+                          }}
+                          className="text-xs bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                        >
+                          View World
+                        </button>
+                      )}
+                      {/* Cancel button if pending or analyzing */}
+                      {(analysis.status === "pending" || analysis.status === "analyzing") && (
+                        <button
+                          onClick={() => handleCancelAnalysis(analysis.id)}
+                          className="text-xs bg-red-950/40 hover:bg-red-955/60 text-red-400 border border-red-900/50 font-medium px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      {/* Close/Dismiss button if terminal */}
+                      {isTerminal && (
+                        <button
+                          onClick={() => handleDismissAnalysis(analysis.id)}
+                          className="text-slate-500 hover:text-slate-300 font-bold px-2 py-1 text-sm"
+                          title="Dismiss"
+                        >
+                          &times;
                         </button>
                       )}
                     </div>
-                  )}
-
-                  {/* Project name */}
-                  <div className="mb-5">
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Project Name</label>
-                    <input type="text"
-                      className="w-full border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-950 text-white placeholder-slate-500"
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                      placeholder="My Microservices Project"
-                    />
                   </div>
+                  {/* Progress bar simulation for active state */}
+                  {!isTerminal && (
+                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden mt-1">
+                      <div className="bg-blue-500 h-full animate-pulse" style={{ width: '100%' }}></div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-                  {/* Repository URLs with webhook settings */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Repository URLs</label>
-                    {repositories.map((repo, idx) => (
-                      <div key={idx} className="mb-4 border border-slate-800 rounded-lg p-3 bg-slate-950/30">
-                        {/* URL row */}
-                        <div className="flex gap-2 items-center">
-                          <input
-                            type="text"
-                            className="flex-grow border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-950 text-white placeholder-slate-500"
-                            value={repo.url}
-                            onChange={(e) => handleUrlChange(idx, e.target.value)}
-                            placeholder="https://github.com/owner/repo.git"
-                          />
-                          {repositories.length > 1 && (
-                            <button type="button" onClick={() => handleRemoveUrl(idx)}
-                              className="text-red-400 hover:text-red-300 font-bold p-2 transition-colors">✕</button>
+        {/* ── Main card ── */}
+        <div className="bg-slate-900 p-8 rounded-xl shadow-2xl max-w-2xl w-full mt-10 border border-slate-800">
+          <h1 className="text-2xl font-bold mb-2 text-center text-white">Micro Grand Maison</h1>
+          <p className="text-slate-400 text-center mb-6 text-sm">
+            Visualize your microservices as a living ecosystem.
+          </p>
+
+          {/* Tab Contents: Create Project */}
+          {dashboardTab === "create" && (
+            <div className="h-[480px] overflow-y-auto pr-1 flex flex-col justify-between">
+              {user?.isAnonymous ? (
+                <div className="p-5 rounded-xl border border-blue-900/50 bg-blue-950/20 text-center text-sm text-blue-300 my-auto">
+                  <p className="font-semibold mb-1 text-white">Guest Mode Active</p>
+                  <p className="text-xs text-blue-400 leading-relaxed">
+                    You are signed in as a guest. Project creation is disabled. Please sign in via GitHub to analyze your own repositories.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    {/* GitHub App connection */}
+                    {user && !user.isAnonymous && (
+                      <div className="mb-5 p-4 rounded-xl border border-slate-800 bg-slate-950/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                        <div>
+                          {installationId ? (
+                            <div className="flex items-center gap-1.5 text-green-400 font-semibold">
+                              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                              GitHub App Connected (ID: {installationId})
+                            </div>
+                          ) : (
+                            <div className="text-slate-400">
+                              {installUrl ? "Connect GitHub App to analyze private repositories." : "GitHub App is not configured. Set GITHUB_APP_INSTALL_URL in backend env."}
+                            </div>
                           )}
                         </div>
-
-                        {/* Checking indicator */}
-                        {repo.checking_access && (
-                          <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400">
-                            <span className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
-                            Checking webhook access...
-                          </div>
+                        {installUrl ? (
+                          <a href={installUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center bg-white hover:bg-slate-100 text-slate-950 font-semibold px-3 py-1.5 rounded-md transition-all self-start sm:self-auto shadow-sm">
+                            {installationId ? "Reconnect" : "Connect GitHub App"}
+                          </a>
+                        ) : (
+                          <button disabled className="inline-flex items-center justify-center bg-slate-800 text-slate-500 font-medium px-3 py-1.5 rounded-md cursor-not-allowed self-start sm:self-auto"
+                            title="GitHub App is not configured on the API server.">
+                            Connect GitHub App
+                          </button>
                         )}
-
-                        {/* Webhook toggle */}
-                        {repo.has_webhook_access && !repo.checking_access && (
-                          <div className="mt-2.5 flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              id={`webhook-enabled-${idx}`}
-                              checked={repo.webhook_enabled}
-                              onChange={(e) => handleWebhookToggle(idx, e.target.checked)}
-                              className="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"
-                            />
-                            <label htmlFor={`webhook-enabled-${idx}`} className="text-xs text-slate-400 cursor-pointer select-none">
-                              Receive update notifications on push
-                            </label>
-                          </div>
-                        )}
-
-                        {/* Branch input */}
-                        <div
-                          className={`overflow-hidden transition-all duration-200 ${repo.webhook_enabled ? "max-h-16 opacity-100 mt-2" : "max-h-0 opacity-0"}`}
-                        >
-                          <input
-                            type="text"
-                            className="w-full border border-slate-800 rounded-md p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-950 text-white placeholder-slate-650"
-                            value={repo.watch_branch}
-                            onChange={(e) => handleBranchChange(idx, e.target.value)}
-                            placeholder="Branch to monitor (e.g. main)"
-                            disabled={!repo.webhook_enabled}
-                          />
-                        </div>
                       </div>
-                    ))}
-                    <button type="button" onClick={handleAddUrl}
-                      className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center gap-1 mt-1">
-                      + Add Repository
-                    </button>
-                  </div>
+                    )}
 
-                  {/* Demo project checkbox (Admin only) */}
-                  {isAdmin && (
-                    <div className="mb-5 p-3 rounded-lg border border-blue-900/40 bg-blue-950/20 flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="is-demo-checkbox"
-                        checked={isDemo}
-                        onChange={(e) => setIsDemo(e.target.checked)}
-                        className="w-4 h-4 accent-blue-600 cursor-pointer"
+                    {/* Project name */}
+                    <div className="mb-5">
+                      <label className="block text-sm font-medium text-slate-300 mb-2">Project Name</label>
+                      <input type="text"
+                        className="w-full border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-950 text-white placeholder-slate-500"
+                        value={projectName}
+                        onChange={(e) => setProjectName(e.target.value)}
+                        placeholder="My Microservices Project"
                       />
-                      <label htmlFor="is-demo-checkbox" className="text-sm text-blue-300 font-medium cursor-pointer select-none">
-                        Register as Demo Project (Public Layout Template)
-                      </label>
                     </div>
-                  )}
-                </div>
 
-                <div className="mt-auto pt-4">
-                  {/* Generate button */}
-                  <button onClick={handleGenerate} disabled={loading}
-                    className={`w-full py-3 rounded-md font-medium text-white transition-colors ${loading ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
-                    {loading ? "Processing..." : "Generate World"}
-                  </button>
+                    {/* Repository URLs with webhook settings */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-slate-300 mb-2">Repository URLs</label>
+                      {repositories.map((repo, idx) => (
+                        <div key={idx} className="mb-4 border border-slate-800 rounded-lg p-3 bg-slate-950/30">
+                          {/* URL row */}
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="text"
+                              className="flex-grow border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-950 text-white placeholder-slate-500"
+                              value={repo.url}
+                              onChange={(e) => handleUrlChange(idx, e.target.value)}
+                              placeholder="https://github.com/owner/repo.git"
+                            />
+                            {repositories.length > 1 && (
+                              <button type="button" onClick={() => handleRemoveUrl(idx)}
+                                className="text-red-400 hover:text-red-300 font-bold p-2 transition-colors">✕</button>
+                            )}
+                          </div>
 
-                  {status && loading && (
-                    <div className="mt-4 text-sm text-blue-400 text-center flex flex-col items-center animate-pulse">
-                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                      {status}
-                    </div>
-                  )}
+                          {/* Checking indicator */}
+                          {repo.checking_access && (
+                            <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-400">
+                              <span className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
+                              Checking webhook access...
+                            </div>
+                          )}
 
-                  {error && (
-                    <div className="mt-4 p-3 bg-red-955/30 border border-red-900/50 text-red-400 text-sm rounded-md break-words">{error}</div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+                          {/* Webhook toggle */}
+                          {repo.has_webhook_access && !repo.checking_access && (
+                            <div className="mt-2.5 flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id={`webhook-enabled-${idx}`}
+                                checked={repo.webhook_enabled}
+                                onChange={(e) => handleWebhookToggle(idx, e.target.checked)}
+                                className="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"
+                              />
+                              <label htmlFor={`webhook-enabled-${idx}`} className="text-xs text-slate-400 cursor-pointer select-none">
+                                Receive update notifications on push
+                              </label>
+                            </div>
+                          )}
 
-        {/* Tab Contents: Projects */}
-        {dashboardTab === "projects" && (
-          <div className="h-[480px] overflow-y-auto pr-1 flex flex-col">
-            {user?.isAnonymous ? (
-              <div className="p-5 rounded-xl border border-blue-900/50 bg-blue-950/20 text-center text-sm text-blue-300 my-auto">
-                <p className="font-semibold mb-1 text-white">GitHub Account Required</p>
-                <p className="text-xs text-blue-400 leading-relaxed">
-                  Please sign in via GitHub to save, view, and analyze your personal projects.
-                </p>
-              </div>
-            ) : personalProjects.length === 0 ? (
-              <div className="p-5 rounded-xl border border-slate-800 bg-slate-950/30 text-center text-sm text-slate-400 my-auto">
-                No personal projects found. Start by creating a project under the "Create Project" tab.
-              </div>
-            ) : (
-              <div className="space-y-2 flex-1">
-                {personalProjects.map((proj) => (
-                  <div key={proj.id}
-                    onClick={() => {
-                      if (proj.status === "ready") {
-                        router.push(`/project/${proj.id}`);
-                      }
-                    }}
-                    className={`flex justify-between items-center p-3 rounded-lg border border-slate-800 transition-all ${proj.status === "ready"
-                        ? "hover:border-blue-500 hover:bg-blue-955/20 cursor-pointer"
-                        : "cursor-default opacity-85"
-                      }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-200 truncate">
-                          {proj.name || `World (${proj.id.substring(0, 8)})`}
-                        </span>
-                        {proj.has_update && (
-                          <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-955/30 text-emerald-400 border border-emerald-900/50">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            New Update
-                          </span>
-                        )}
-                      </div>
-                      {proj.repositories && proj.repositories.length > 0 && (
-                        <div className="flex flex-col gap-0.5 mt-1">
-                          {proj.repositories.map((repo) => (
-                            <a
-                              key={repo.id}
-                              href={repo.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-xs text-blue-400 hover:text-blue-300 hover:underline truncate max-w-[90%] font-mono"
-                            >
-                              {repo.url}
-                            </a>
-                          ))}
+                          {/* Branch input */}
+                          <div
+                            className={`overflow-hidden transition-all duration-200 ${repo.webhook_enabled ? "max-h-16 opacity-100 mt-2" : "max-h-0 opacity-0"}`}
+                          >
+                            <input
+                              type="text"
+                              className="w-full border border-slate-800 rounded-md p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-950 text-white placeholder-slate-650"
+                              value={repo.watch_branch}
+                              onChange={(e) => handleBranchChange(idx, e.target.value)}
+                              placeholder="Branch to monitor (e.g. main)"
+                              disabled={!repo.webhook_enabled}
+                            />
+                          </div>
                         </div>
-                      )}
-                      <div className="text-xs text-slate-500 mt-1">
-                        {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-955/30 text-green-400 border border-green-900/50" :
-                          proj.status === "analyzing" ? "bg-blue-955/30 text-blue-400 border border-blue-900/50 animate-pulse" :
-                            proj.status === "pending" ? "bg-amber-955/30 text-amber-400 border border-amber-900/50 animate-pulse" :
-                              proj.status === "cancelled" ? "bg-slate-800 text-slate-400 border border-slate-700" :
-                                "bg-red-955/30 text-red-400 border border-red-900/50"
-                        }`}>
-                        {proj.status}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteClick(proj);
-                        }}
-                        className="text-slate-500 hover:text-red-400 p-1.5 rounded-md transition-colors ml-2 flex-shrink-0 hover:bg-slate-800"
-                        title="Delete Project"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                      ))}
+                      <button type="button" onClick={handleAddUrl}
+                        className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center gap-1 mt-1">
+                        + Add Repository
                       </button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Tab Contents: Samples */}
-        {dashboardTab === "samples" && (
-          <div className="h-[480px] overflow-y-auto pr-1 flex flex-col">
-            {demoProjects.length === 0 ? (
-              <div className="p-5 rounded-xl border border-slate-800 bg-slate-950/30 text-center text-sm text-slate-400 my-auto">
-                No sample projects available.
-              </div>
-            ) : (
-              <div className="space-y-2 flex-1">
-                {demoProjects.map((proj) => (
-                  <div key={proj.id}
-                    onClick={() => {
-                      if (proj.status === "ready") {
-                        router.push(`/project/${proj.id}`);
-                      }
-                    }}
-                    className={`flex justify-between items-center p-3 rounded-lg border border-slate-800 transition-all ${proj.status === "ready"
+                    {/* Demo project checkbox (Admin only) */}
+                    {isAdmin && (
+                      <div className="mb-5 p-3 rounded-lg border border-blue-900/40 bg-blue-950/20 flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="is-demo-checkbox"
+                          checked={isDemo}
+                          onChange={(e) => setIsDemo(e.target.checked)}
+                          className="w-4 h-4 accent-blue-600 cursor-pointer"
+                        />
+                        <label htmlFor="is-demo-checkbox" className="text-sm text-blue-300 font-medium cursor-pointer select-none">
+                          Register as Demo Project (Public Layout Template)
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-auto pt-4">
+                    {/* Generate button */}
+                    <button onClick={handleGenerate} disabled={loading}
+                      className={`w-full py-3 rounded-md font-medium text-white transition-colors ${loading ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
+                      {loading ? "Processing..." : "Generate World"}
+                    </button>
+
+                    {status && loading && (
+                      <div className="mt-4 text-sm text-blue-400 text-center flex flex-col items-center animate-pulse">
+                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        {status}
+                      </div>
+                    )}
+
+                    {error && (
+                      <div className="mt-4 p-3 bg-red-955/30 border border-red-900/50 text-red-400 text-sm rounded-md break-words">{error}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab Contents: Projects */}
+          {dashboardTab === "projects" && (
+            <div className="h-[480px] overflow-y-auto pr-1 flex flex-col">
+              {user?.isAnonymous ? (
+                <div className="p-5 rounded-xl border border-blue-900/50 bg-blue-950/20 text-center text-sm text-blue-300 my-auto">
+                  <p className="font-semibold mb-1 text-white">GitHub Account Required</p>
+                  <p className="text-xs text-blue-400 leading-relaxed">
+                    Please sign in via GitHub to save, view, and analyze your personal projects.
+                  </p>
+                </div>
+              ) : personalProjects.length === 0 ? (
+                <div className="p-5 rounded-xl border border-slate-800 bg-slate-950/30 text-center text-sm text-slate-400 my-auto">
+                  No personal projects found. Start by creating a project under the "Create Project" tab.
+                </div>
+              ) : (
+                <div className="space-y-2 flex-1">
+                  {personalProjects.map((proj) => (
+                    <div key={proj.id}
+                      onClick={() => {
+                        if (proj.status === "ready") {
+                          router.push(`/project/${proj.id}`);
+                        }
+                      }}
+                      className={`flex justify-between items-center p-3 rounded-lg border border-slate-800 transition-all ${proj.status === "ready"
                         ? "hover:border-blue-500 hover:bg-blue-955/20 cursor-pointer"
                         : "cursor-default opacity-85"
-                      }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-slate-200 truncate">
-                          {proj.name || `World (${proj.id.substring(0, 8)})`}
-                        </span>
-                      </div>
-                      {proj.repositories && proj.repositories.length > 0 && (
-                        <div className="flex flex-col gap-0.5 mt-1">
-                          {proj.repositories.map((repo) => (
-                            <a
-                              key={repo.id}
-                              href={repo.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-xs text-blue-400 hover:text-blue-300 hover:underline truncate max-w-[90%] font-mono"
-                            >
-                              {repo.url}
-                            </a>
-                          ))}
+                        }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-200 truncate">
+                            {proj.name || `World (${proj.id.substring(0, 8)})`}
+                          </span>
+                          {proj.has_update && (
+                            <span className="flex-shrink-0 inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-955/30 text-emerald-400 border border-emerald-900/50">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                              New Update
+                            </span>
+                          )}
                         </div>
-                      )}
-                      <div className="text-xs text-slate-500 mt-1">
-                        {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
+                        {proj.repositories && proj.repositories.length > 0 && (
+                          <div className="flex flex-col gap-0.5 mt-1">
+                            {proj.repositories.map((repo) => (
+                              <a
+                                key={repo.id}
+                                href={repo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-xs text-blue-400 hover:text-blue-300 hover:underline truncate max-w-[90%] font-mono"
+                              >
+                                {repo.url}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        <div className="text-xs text-slate-500 mt-1">
+                          {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center">
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-955/30 text-green-400 border border-green-900/50" :
+                      <div className="flex items-center">
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-955/30 text-green-400 border border-green-900/50" :
                           proj.status === "analyzing" ? "bg-blue-955/30 text-blue-400 border border-blue-900/50 animate-pulse" :
                             proj.status === "pending" ? "bg-amber-955/30 text-amber-400 border border-amber-900/50 animate-pulse" :
                               proj.status === "cancelled" ? "bg-slate-800 text-slate-400 border border-slate-700" :
                                 "bg-red-955/30 text-red-400 border border-red-900/50"
-                        }`}>
-                        {proj.status}
-                      </span>
+                          }`}>
+                          {proj.status}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(proj);
+                          }}
+                          className="text-slate-500 hover:text-red-400 p-1.5 rounded-md transition-colors ml-2 flex-shrink-0 hover:bg-slate-800"
+                          title="Delete Project"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab Contents: Samples */}
+          {dashboardTab === "samples" && (
+            <div className="h-[480px] overflow-y-auto pr-1 flex flex-col">
+              {demoProjects.length === 0 ? (
+                <div className="p-5 rounded-xl border border-slate-800 bg-slate-950/30 text-center text-sm text-slate-400 my-auto">
+                  No sample projects available.
+                </div>
+              ) : (
+                <div className="space-y-2 flex-1">
+                  {demoProjects.map((proj) => (
+                    <div key={proj.id}
+                      onClick={() => {
+                        if (proj.status === "ready") {
+                          router.push(`/project/${proj.id}`);
+                        }
+                      }}
+                      className={`flex justify-between items-center p-3 rounded-lg border border-slate-800 transition-all ${proj.status === "ready"
+                        ? "hover:border-blue-500 hover:bg-blue-955/20 cursor-pointer"
+                        : "cursor-default opacity-85"
+                        }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-200 truncate">
+                            {proj.name || `World (${proj.id.substring(0, 8)})`}
+                          </span>
+                        </div>
+                        {proj.repositories && proj.repositories.length > 0 && (
+                          <div className="flex flex-col gap-0.5 mt-1">
+                            {proj.repositories.map((repo) => (
+                              <a
+                                key={repo.id}
+                                href={repo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-xs text-blue-400 hover:text-blue-300 hover:underline truncate max-w-[90%] font-mono"
+                              >
+                                {repo.url}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        <div className="text-xs text-slate-500 mt-1">
+                          {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-955/30 text-green-400 border border-green-900/50" :
+                          proj.status === "analyzing" ? "bg-blue-955/30 text-blue-400 border border-blue-900/50 animate-pulse" :
+                            proj.status === "pending" ? "bg-amber-955/30 text-amber-400 border border-amber-900/50 animate-pulse" :
+                              proj.status === "cancelled" ? "bg-slate-800 text-slate-400 border border-slate-700" :
+                                "bg-red-955/30 text-red-400 border border-red-900/50"
+                          }`}>
+                          {proj.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Premium Glassmorphism Password Modal */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+            <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
+              <h3 className="text-lg font-bold text-white mb-2">Admin Authentication</h3>
+              <p className="text-xs text-slate-400 mb-4">
+                You are registering a Demo Project (Layout Template). Please enter the admin password to authorize this action.
+              </p>
+
+              <input
+                type="password"
+                className="w-full border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4 bg-slate-950 text-white placeholder-slate-650"
+                placeholder="Enter admin password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleVerifyPassword();
+                }}
+                autoFocus
+              />
+
+              {modalError && (
+                <p className="text-xs text-red-400 mb-4 bg-red-955/30 p-2 rounded-md border border-red-900/50">{modalError}</p>
+              )}
+
+              <div className="flex justify-end gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setAdminPassword("");
+                    setModalError(null);
+                  }}
+                  className="px-4 py-2 border border-slate-800 text-slate-300 rounded-md hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyPassword}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
+                >
+                  Verify & Submit
+                </button>
               </div>
-            )}
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Premium Glassmorphism Password Modal */}
-      {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
-          <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-white mb-2">Admin Authentication</h3>
-            <p className="text-xs text-slate-400 mb-4">
-              You are registering a Demo Project (Layout Template). Please enter the admin password to authorize this action.
-            </p>
+        {/* Premium Glassmorphism Delete Confirmation Modal */}
+        {showDeleteModal && projectToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+            <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
+              <h3 className="text-lg font-bold text-red-500 mb-2">Delete Project</h3>
+              <p className="text-xs text-slate-400 mb-4 text-left">
+                Are you sure you want to permanently delete project <strong className="text-slate-200">"{projectToDelete.name || `World (${projectToDelete.id.substring(0, 8)})`}"</strong>? This action will permanently remove all associated repositories, microservices, dependencies, GCS avatars, and chat history.
+              </p>
 
-            <input
-              type="password"
-              className="w-full border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4 bg-slate-950 text-white placeholder-slate-650"
-              placeholder="Enter admin password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleVerifyPassword();
-              }}
-              autoFocus
-            />
-
-            {modalError && (
-              <p className="text-xs text-red-400 mb-4 bg-red-955/30 p-2 rounded-md border border-red-900/50">{modalError}</p>
-            )}
-
-            <div className="flex justify-end gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  setAdminPassword("");
-                  setModalError(null);
-                }}
-                className="px-4 py-2 border border-slate-800 text-slate-300 rounded-md hover:bg-slate-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleVerifyPassword}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
-              >
-                Verify & Submit
-              </button>
+              <div className="flex justify-end gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setProjectToDelete(null);
+                  }}
+                  className="px-4 py-2 border border-slate-800 text-slate-300 rounded-md hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
+                >
+                  Permanently Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Premium Glassmorphism Delete Confirmation Modal */}
-      {showDeleteModal && projectToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
-          <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-2xl max-w-sm w-full p-6 mx-4 relative animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-red-500 mb-2">Delete Project</h3>
-            <p className="text-xs text-slate-400 mb-4 text-left">
-              Are you sure you want to permanently delete project <strong className="text-slate-200">"{projectToDelete.name || `World (${projectToDelete.id.substring(0, 8)})`}"</strong>? This action will permanently remove all associated repositories, microservices, dependencies, GCS avatars, and chat history.
-            </p>
-
-            <div className="flex justify-end gap-2 text-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setProjectToDelete(null);
-                }}
-                className="px-4 py-2 border border-slate-800 text-slate-300 rounded-md hover:bg-slate-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
-              >
-                Permanently Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
-  </div>
+        )}
+      </main>
+    </div>
   );
 }

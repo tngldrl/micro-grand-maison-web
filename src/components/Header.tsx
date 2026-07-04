@@ -6,7 +6,15 @@ import Link from "next/link";
 import { auth, onAuthStateChanged, signOut } from "../lib/firebase";
 import type { User } from "firebase/auth";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const getApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    if (window.location.hostname.endsWith("micro-grandmaison.com")) {
+      return "https://api.micro-grandmaison.com";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+};
+const API_BASE_URL = getApiBaseUrl();
 
 interface WebhookDelivery {
   id: string;

@@ -17,7 +17,15 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import Header from "../../../components/Header";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const getApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    if (window.location.hostname.endsWith("micro-grandmaison.com")) {
+      return "https://api.micro-grandmaison.com";
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+};
+const API_BASE_URL = getApiBaseUrl();
 
 const CanvasBackgroundNode = memo(() => {
   const kitchenImg = "/Gemini_Generated_Image_8qp5te8qp5te8qp5.png";
