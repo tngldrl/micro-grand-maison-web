@@ -232,7 +232,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
                       style={{ width: imageSize, height: imageSize }}
                       className="mb-2 object-contain filter drop-shadow-[0_8px_16px_rgba(0,0,0,0.25)] transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_12px_20px_rgba(0,0,0,0.35)]"
                     />
-                    <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-xl p-3.5 shadow-md flex flex-col items-center w-max min-w-[200px] max-w-[450px] px-5 transition-all duration-300 group-hover:border-blue-300 group-hover:shadow-lg">
+                    <div className="bg-white/95 backdrop-blur-sm border border-slate-200/80 rounded-xl p-3.5 shadow-md flex flex-col items-center w-max min-w-[200px] px-5 transition-all duration-300 group-hover:border-blue-300 group-hover:shadow-lg">
                       <span className={`font-bold ${fontSize} text-slate-800 text-center whitespace-nowrap`}>{ms.name}</span>
                     </div>
                   </div>
