@@ -731,7 +731,7 @@ export default function Dashboard() {
               as a <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Living Ecosystem</span>
             </h1>
             <p className="text-slate-400 text-base sm:text-lg leading-relaxed max-w-xl">
-              Micro Grand Maisonは、マイクロサービスアーキテクチャを構成する一つ一つのサービスを親近感のあるキャラクターアバターに変換し、アーキテクチャ全体を反映するヴァーチャル空間を創出します。
+              Micro Grand Maisonは、マイクロサービスアーキテクチャを構成する一つ一つのサービスを親近感のあるキャラクターアバターに変換し、アーキテクチャ全体を反映したヴァーチャル空間を創出します。
             </p>
 
             {/* Login Box inside Hero */}
@@ -765,13 +765,10 @@ export default function Dashboard() {
           </div>
 
           <div className="md:col-span-5 w-full">
-            <ImagePlaceholder
-              label="Image 1: Hotel Manager character mockup"
-              icon={
-                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-              }
+            <img 
+              src="/web_avatar.png" 
+              alt="Micro Grand Maison Web Character" 
+              className="w-full max-h-[380px] object-contain mx-auto transform hover:scale-[1.03] transition-all duration-300 filter drop-shadow-[0_16px_32px_rgba(0,0,0,0.4)]"
             />
           </div>
         </section>
@@ -781,13 +778,10 @@ export default function Dashboard() {
           <div className="max-w-6xl w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
             {/* Left side: Image 2 */}
             <div className="md:col-span-6 order-last md:order-first">
-              <ImagePlaceholder
-                label="Image 2: 2D Component Diagram overview"
-                icon={
-                  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
-                  </svg>
-                }
+              <img 
+                src="/diagram.png" 
+                alt="2D Component Diagram Overview" 
+                className="w-full rounded-2xl border border-slate-800/80 shadow-2xl object-cover bg-slate-900 aspect-[4/3] transform hover:scale-[1.02] transition-transform duration-300"
               />
             </div>
             {/* Right side: Text 1 */}
@@ -816,13 +810,10 @@ export default function Dashboard() {
             </div>
             {/* Right side: Image 3 */}
             <div className="md:col-span-6 w-full">
-              <ImagePlaceholder
-                label="Image 3: Character chat interface"
-                icon={
-                  <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.92 1.786c-.082.112-.031.27.121.25a7.482 7.482 0 003.714-1.28c.459.204.96.314 1.493.314z" />
-                  </svg>
-                }
+              <img 
+                src="/chat.png" 
+                alt="Interactive Avatar Conversations Chat Interface" 
+                className="w-full rounded-2xl border border-slate-800/80 shadow-2xl h-auto object-contain transform scale-[1.2] translate-x-[10%] hover:scale-[1.22] transition-transform duration-300 origin-center"
               />
             </div>
           </div>
@@ -847,7 +838,7 @@ export default function Dashboard() {
       const nameB = (b.name || "").toLowerCase().trim();
       const isMGM_A = nameA === "micro-grand-maison" || nameA === "micro grand maison";
       const isMGM_B = nameB === "micro-grand-maison" || nameB === "micro grand maison";
-      
+
       if (isMGM_A && !isMGM_B) return -1;
       if (!isMGM_A && isMGM_B) return 1;
 
