@@ -30,6 +30,7 @@ interface Project {
   status: string;
   has_update: boolean;
   is_demo?: boolean;
+  user_id?: string | null;
   created_at: string | null;
   repositories?: { id: string; url: string }[];
 }
@@ -837,7 +838,7 @@ export default function Dashboard() {
   // ─── Main dashboard ──────────────────────────────────────────────────────
 
   const demoProjects = projects.filter(p => p.is_demo);
-  const personalProjects = projects.filter(p => !p.is_demo);
+  const personalProjects = projects.filter(p => !p.is_demo || p.user_id === user?.uid);
 
   const allNotifications = [
     ...projectNotifications.map(n => ({
