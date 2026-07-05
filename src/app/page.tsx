@@ -8,8 +8,14 @@ import Header from "../components/Header";
 
 const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
     if (window.location.hostname.endsWith("micro-grandmaison.com")) {
       return "https://api.micro-grandmaison.com";
+    }
+    if (window.location.hostname.endsWith("run.app")) {
+      return window.location.origin.replace("-web-", "-api-");
     }
   }
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -721,7 +727,7 @@ export default function Dashboard() {
               as a <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Living Ecosystem</span>
             </h1>
             <p className="text-slate-400 text-base sm:text-lg leading-relaxed max-w-xl">
-              Micro Grand Maisonは、マイクロサービスアーキテクチャを分析し、サービスを親しみのあるキャラクターアバターに変換し、直感的な2Dマップに仕上げます。
+              Micro Grand Maisonは、マイクロサービスアーキテクチャを構成する一つ一つのサービスを親近感のあるキャラクターアバターに変換し、アーキテクチャ全体を反映するヴァーチャル空間を創出します。
             </p>
 
             {/* Login Box inside Hero */}
@@ -786,7 +792,7 @@ export default function Dashboard() {
                 2D Component Mapping
               </h2>
               <p className="text-slate-350 text-base sm:text-lg leading-relaxed font-medium">
-                マイクロサービスアーキテクチャのソースコードを管理するリポジトリのURLを入力することで、構成するコンポーネントがキャラクター化された2Dダイアグラムが作成されます。
+                マイクロサービスアーキテクチャのソースコードを管理するリポジトリのURLを入力するだけで、構成するコンポーネントがキャラクターとなって可視化された2Dダイアグラムが生成されます。<br /><br /> Githubへのpushを検知してダイアグラムを更新でき、日々進化するアーキテクチャを反映させることが可能です。
               </p>
             </div>
           </div>
@@ -801,7 +807,7 @@ export default function Dashboard() {
                 Interactive Avatar Conversations
               </h2>
               <p className="text-slate-355 text-base sm:text-lg leading-relaxed font-medium">
-                各キャラクターとチャットで対話でき、アーキテクチャを理解するための全く新しい体験を提供します。
+                キャラクターとのチャットでの対話を通してアーキテクチャの仕組みを学ぶことができ、複雑化の進むマイクロサービスアーキテクチャを理解するための全く新しい体験を提供します。
               </p>
             </div>
             {/* Right side: Image 3 */}

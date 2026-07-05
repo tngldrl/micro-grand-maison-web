@@ -19,8 +19,14 @@ import Header from "../../../components/Header";
 
 const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
     if (window.location.hostname.endsWith("micro-grandmaison.com")) {
       return "https://api.micro-grandmaison.com";
+    }
+    if (window.location.hostname.endsWith("run.app")) {
+      return window.location.origin.replace("-web-", "-api-");
     }
   }
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
