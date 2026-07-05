@@ -165,7 +165,8 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
     if (auth) {
       await signOut(auth);
     }
-    router.push("/");
+    setUser(null);
+    window.location.href = "/";
   };
 
   if (!user) return null; // Only show when logged in
