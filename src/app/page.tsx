@@ -840,7 +840,13 @@ export default function Dashboard() {
 
   // ─── Main dashboard ──────────────────────────────────────────────────────
 
-  const demoProjects = projects.filter(p => p.is_demo);
+  const demoProjects = projects
+    .filter(p => p.is_demo)
+    .sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateA - dateB;
+    });
   const personalProjects = projects.filter(p => !p.is_demo || p.user_id === user?.uid);
 
   const allNotifications = [
