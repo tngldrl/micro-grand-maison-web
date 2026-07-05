@@ -843,6 +843,14 @@ export default function Dashboard() {
   const demoProjects = projects
     .filter(p => p.is_demo)
     .sort((a, b) => {
+      const nameA = (a.name || "").toLowerCase().trim();
+      const nameB = (b.name || "").toLowerCase().trim();
+      const isMGM_A = nameA === "micro-grand-maison" || nameA === "micro grand maison";
+      const isMGM_B = nameB === "micro-grand-maison" || nameB === "micro grand maison";
+      
+      if (isMGM_A && !isMGM_B) return -1;
+      if (!isMGM_A && isMGM_B) return 1;
+
       const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
       const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
       return dateA - dateB;
