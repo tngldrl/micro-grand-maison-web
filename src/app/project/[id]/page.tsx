@@ -98,6 +98,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
   const [edges, setEdges] = useState<Edge[]>([]);
   const [repositories, setRepositories] = useState<any[]>([]);
   const [projectName, setProjectName] = useState<string | null>(null);
+  const [copyrightsDescription, setCopyrightsDescription] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasUpdate, setHasUpdate] = useState(false);
@@ -277,6 +278,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
         setEdges(initialEdges);
         setRepositories(data.repositories || []);
         setProjectName(data.name || null);
+        setCopyrightsDescription(data.copyrights_description || null);
         setHasUpdate(data.has_update ?? false);
       } catch (err: any) {
         setError(err.message);
@@ -540,6 +542,11 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
             <Background color="rgba(255, 255, 255, 0.18)" gap={60} size={15} />
             <Controls />
           </ReactFlow>
+          {copyrightsDescription && (
+            <div className="absolute bottom-4 right-4 bg-slate-950/80 backdrop-blur-sm border border-slate-800 px-3 py-1.5 rounded-lg text-[10px] text-slate-400 max-w-sm pointer-events-none select-none z-[1000]">
+              {copyrightsDescription}
+            </div>
+          )}
         </div>
 
         {/* Chat Drawer */}

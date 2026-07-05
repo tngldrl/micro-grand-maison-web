@@ -31,6 +31,7 @@ interface Project {
   has_update: boolean;
   is_demo?: boolean;
   user_id?: string | null;
+  copyrights_description?: string | null;
   created_at: string | null;
   repositories?: { id: string; url: string }[];
 }
@@ -121,6 +122,7 @@ export default function Dashboard() {
   // Admin authentication state
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDemo, setIsDemo] = useState(false);
+  const [copyrightsDescription, setCopyrightsDescription] = useState("");
   const [adminToken, setAdminToken] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
@@ -625,6 +627,7 @@ export default function Dashboard() {
           project_name: projectName.trim() || null,
           github_installation_id: installationId || null,
           is_demo: isDemo,
+          copyrights_description: isDemo ? copyrightsDescription : null,
         }),
       });
       if (!res.ok) { throw new Error(await res.text()); }
@@ -1066,18 +1069,32 @@ export default function Dashboard() {
 
                     {/* Demo project checkbox (Admin only) */}
                     {isAdmin && (
-                      <div className="mb-5 p-3 rounded-lg border border-blue-900/40 bg-blue-950/20 flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="is-demo-checkbox"
-                          checked={isDemo}
-                          onChange={(e) => setIsDemo(e.target.checked)}
-                          className="w-4 h-4 accent-blue-600 cursor-pointer"
-                        />
-                        <label htmlFor="is-demo-checkbox" className="text-sm text-blue-300 font-medium cursor-pointer select-none">
-                          Register as Demo Project (Public Layout Template)
-                        </label>
-                      </div>
+                      <>
+                        <div className="mb-5 p-3 rounded-lg border border-blue-900/40 bg-blue-950/20 flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="is-demo-checkbox"
+                            checked={isDemo}
+                            onChange={(e) => setIsDemo(e.target.checked)}
+                            className="w-4 h-4 accent-blue-600 cursor-pointer"
+                          />
+                          <label htmlFor="is-demo-checkbox" className="text-sm text-blue-300 font-medium cursor-pointer select-none">
+                            Register as Demo Project (Public Layout Template)
+                          </label>
+                        </div>
+                        {isDemo && (
+                          <div className="mb-5">
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Copyrights / License Description</label>
+                            <textarea
+                              rows={3}
+                              className="w-full border border-slate-800 rounded-md p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-950 text-white placeholder-slate-500"
+                              placeholder="e.g. Copyright 2016 Eventuate, Inc. Licensed under Apache 2.0"
+                              value={copyrightsDescription}
+                              onChange={(e) => setCopyrightsDescription(e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -1237,9 +1254,6 @@ export default function Dashboard() {
                             ))}
                           </div>
                         )}
-                        <div className="text-xs text-slate-500 mt-1">
-                          {proj.created_at ? new Date(proj.created_at).toLocaleDateString() : ""}
-                        </div>
                       </div>
                       <div className="flex items-center">
                         <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ml-2 ${proj.status === "ready" ? "bg-green-955/30 text-green-400 border border-green-900/50" :
