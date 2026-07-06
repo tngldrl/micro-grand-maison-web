@@ -765,9 +765,9 @@ export default function Dashboard() {
           </div>
 
           <div className="md:col-span-5 w-full">
-            <img 
-              src="/web_avatar.png" 
-              alt="Micro Grand Maison Web Character" 
+            <img
+              src="/web_avatar.png"
+              alt="Micro Grand Maison Web Character"
               className="w-full max-h-[380px] object-contain mx-auto transform hover:scale-[1.03] transition-all duration-300 filter drop-shadow-[0_16px_32px_rgba(0,0,0,0.4)]"
             />
           </div>
@@ -778,9 +778,9 @@ export default function Dashboard() {
           <div className="max-w-6xl w-full mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
             {/* Left side: Image 2 */}
             <div className="md:col-span-6 order-last md:order-first">
-              <img 
-                src="/diagram.png" 
-                alt="2D Component Diagram Overview" 
+              <img
+                src="/diagram.png"
+                alt="2D Component Diagram Overview"
                 className="w-full rounded-2xl border border-slate-800/80 shadow-2xl object-cover bg-slate-900 aspect-[4/3] transform hover:scale-[1.02] transition-transform duration-300"
               />
             </div>
@@ -790,7 +790,7 @@ export default function Dashboard() {
                 2D Component Mapping
               </h2>
               <p className="text-slate-350 text-base sm:text-lg leading-relaxed font-medium">
-                マイクロサービスアーキテクチャのソースコードを管理するリポジトリのURLを入力するだけで、構成するコンポーネントがキャラクターとなって可視化された2Dダイアグラムが生成されます。<br /><br /> Githubへのpushを検知してダイアグラムを更新でき、日々進化するアーキテクチャを反映させることが可能です。
+                マイクロサービスのリポジトリURLを入力するだけで、構成コンポーネントが『動物たちが働くレストランの個性豊かなスタッフ』へと変身し、2Dダイアグラム上に描き出されます。<br />ホールやキッチンでの役割分担を模したビジュアルにより、コンポーネント同士の関係性とそれぞれの役割を直感的に理解することができます。<br /><br /> Githubへのpushを検知してダイアグラムを更新でき、日々進化するアーキテクチャを反映させることが可能です。
               </p>
             </div>
           </div>
@@ -810,9 +810,9 @@ export default function Dashboard() {
             </div>
             {/* Right side: Image 3 */}
             <div className="md:col-span-6 w-full">
-              <img 
-                src="/chat.png" 
-                alt="Interactive Avatar Conversations Chat Interface" 
+              <img
+                src="/chat.png"
+                alt="Interactive Avatar Conversations Chat Interface"
                 className="w-full rounded-2xl border border-slate-800/80 shadow-2xl h-auto object-contain transform scale-[1.2] translate-x-[10%] hover:scale-[1.22] transition-transform duration-300 origin-center"
               />
             </div>
