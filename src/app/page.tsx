@@ -1028,7 +1028,7 @@ export default function Dashboard() {
                           )}
 
                           {/* Webhook toggle */}
-                          {repo.has_webhook_access && !repo.checking_access && (
+                          {installationId && repo.has_webhook_access && !repo.checking_access && (
                             <div className="mt-2.5 flex items-center gap-2">
                               <input
                                 type="checkbox"
