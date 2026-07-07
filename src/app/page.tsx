@@ -722,7 +722,7 @@ export default function Dashboard() {
               Visualize Microservices <br />
               as a <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Living Ecosystem</span>
             </h1>
-            <p className="text-slate-400 text-base sm:text-lg leading-relaxed max-w-xl">
+            <p className="text-white text-base sm:text-lg leading-relaxed max-w-xl">
               Micro Grand Maisonは、マイクロサービスアーキテクチャを構成する一つ一つのサービスを親近感のあるキャラクターアバターに変換し、アーキテクチャ全体を反映したヴァーチャル空間を創出します。
             </p>
 
@@ -940,7 +940,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Main card ── */}
-        <div className="bg-slate-900 p-8 rounded-xl shadow-2xl max-w-2xl w-full mt-10 border border-slate-800">
+        <div className="bg-slate-900 p-8 rounded-xl shadow-2xl max-w-2xl w-full mt-10 border border-slate-800" style={{ zoom: 1.3 }}>
           <h1 className="text-2xl font-bold mb-2 text-center text-white">Micro Grand Maison</h1>
           <p className="text-slate-400 text-center mb-6 text-sm">
             Visualize your microservices as a living ecosystem.
@@ -1085,7 +1085,7 @@ export default function Dashboard() {
                     {/* Generate button */}
                     <button onClick={handleGenerate} disabled={loading}
                       className={`w-full py-3 rounded-md font-medium text-white transition-colors ${loading ? "bg-slate-800 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
-                      {loading ? "Processing..." : "Generate World"}
+                      {loading ? "Processing..." : "Analyze Repositories"}
                     </button>
 
                     {status && loading && (
