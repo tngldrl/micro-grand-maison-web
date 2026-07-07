@@ -622,7 +622,7 @@ export default function Dashboard() {
           repositories: filteredRepos.map(r => ({
             url: r.url.trim(),
             webhook_enabled: r.webhook_enabled,
-            watch_branch: r.webhook_enabled ? r.watch_branch.trim() : null,
+            watch_branch: null,
           })),
           project_name: projectName.trim() || null,
           github_installation_id: installationId || null,
@@ -661,14 +661,6 @@ export default function Dashboard() {
     }
     const filteredRepos = repositories.filter(r => r.url.trim());
     if (filteredRepos.length === 0) { setError("Please enter at least one repository URL."); return; }
-
-    // Validate webhook settings
-    for (const r of filteredRepos) {
-      if (r.webhook_enabled && !r.watch_branch.trim()) {
-        setError(`Please enter a branch name for update notifications on: ${r.url}`);
-        return;
-      }
-    }
 
     if (isDemo && !adminToken) {
       setShowPasswordModal(true);
@@ -1046,24 +1038,10 @@ export default function Dashboard() {
                                 className="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"
                               />
                               <label htmlFor={`webhook-enabled-${idx}`} className="text-xs text-slate-400 cursor-pointer select-none">
-                                Receive update notifications on push
+                                Receive update notifications on push (Monitors default branch)
                               </label>
                             </div>
                           )}
-
-                          {/* Branch input */}
-                          <div
-                            className={`overflow-hidden transition-all duration-200 ${repo.webhook_enabled ? "max-h-16 opacity-100 mt-2" : "max-h-0 opacity-0"}`}
-                          >
-                            <input
-                              type="text"
-                              className="w-full border border-slate-800 rounded-md p-2 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-950 text-white placeholder-slate-650"
-                              value={repo.watch_branch}
-                              onChange={(e) => handleBranchChange(idx, e.target.value)}
-                              placeholder="Branch to monitor (e.g. main)"
-                              disabled={!repo.webhook_enabled}
-                            />
-                          </div>
                         </div>
                       ))}
                       <button type="button" onClick={handleAddUrl}
