@@ -71,20 +71,44 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
   const [newsFeedOpen, setNewsFeedOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync user state
   useEffect(() => {
     if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
       if (u) {
         setUser(u);
+        if (!u.isAnonymous) {
+          try {
+            const token = await u.getIdToken();
+            const githubUsername = (u as any).reloadUserInfo?.screenName || "";
+            const res = await fetch(`${API_BASE_URL}/api/users/sync`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({ github_username: githubUsername })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              setIsAdmin(data.is_admin);
+            }
+          } catch (err) {
+            console.error("Failed to sync user with admin role", err);
+          }
+        } else {
+          setIsAdmin(false);
+        }
       } else {
         if (localStorage.getItem("guest_mode") === "true") {
           setUser({ isAnonymous: true, uid: "mock-guest" } as any);
         } else {
           setUser(null);
         }
+        setIsAdmin(false);
       }
     });
     return () => unsubscribe();
@@ -402,6 +426,15 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
                   {displayLabel}
                 </p>
               </div>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="w-full text-left px-4 py-2 text-sm text-emerald-400 hover:bg-slate-800 transition-colors font-semibold border-b border-slate-800"
+                >
+                  Admin Console
+                </Link>
+              )}
               <button
                 onClick={() => {
                   setUserMenuOpen(false);
