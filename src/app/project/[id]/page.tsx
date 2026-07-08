@@ -386,18 +386,28 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
 
     const userMessage = chatInput.trim();
     setChatInput("");
+    
+    // Save current memory history to send to backend if user is guest
+    const currentMessages = [...chatMessages];
+
     setChatMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsChatLoading(true);
 
     try {
       const token = localStorage.getItem("firebase_token") || "guest";
+      
+      const payload: any = { message: userMessage };
+      if (token === "guest") {
+        payload.history = currentMessages;
+      }
+
       const res = await fetch(`${API_BASE_URL}/api/microservices/${selectedMs.id}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ message: userMessage })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         const data = await res.json();
