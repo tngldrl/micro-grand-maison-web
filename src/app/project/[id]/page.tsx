@@ -34,7 +34,7 @@ const getApiBaseUrl = () => {
 const API_BASE_URL = getApiBaseUrl();
 
 const CanvasBackgroundNode = memo(() => {
-  const kitchenImg = "/Gemini_Generated_Image_8qp5te8qp5te8qp5.png";
+  const kitchenImg = "/Gemini_Generated_Image_8qp5te8qp5te8qp5.webp";
   const encodedKitchenImg = encodeURI(kitchenImg);
 
   return (
@@ -57,7 +57,7 @@ const CanvasBackgroundNode = memo(() => {
       <div
         className="absolute top-[433px] left-0 w-[2722px] h-[2268px] bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url('/Gemini_Generated_Image_dqrkx3dqrkx3dqrk.png')",
+          backgroundImage: "url('/Gemini_Generated_Image_dqrkx3dqrkx3dqrk.webp')",
           opacity: 0.50,
         }}
       />
@@ -431,6 +431,8 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden bg-black">
+      <link rel="preload" href="/Gemini_Generated_Image_8qp5te8qp5te8qp5.webp" as="image" type="image/webp" />
+      <link rel="preload" href="/Gemini_Generated_Image_dqrkx3dqrkx3dqrk.webp" as="image" type="image/webp" />
       <Header projectName={projectName} />
       {/* Sub-Header bar */}
       <div className="w-full bg-slate-950 border-b border-slate-900/60 px-6 py-3 flex flex-col justify-center items-start gap-2 z-20 relative">
