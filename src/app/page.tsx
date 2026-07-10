@@ -266,7 +266,32 @@ export default function Dashboard() {
         const res = await fetch(`${API_BASE_URL}/api/projects`, {
           headers: { "Authorization": `Bearer ${token}` },
         });
-        if (res.ok) { const data = await res.json(); setProjects(data || []); }
+        if (res.ok) {
+          const data = await res.json();
+          setProjects(data || []);
+          
+          // Auto-sync background pending/analyzing projects into activeAnalyses
+          const incomingProjects = data || [];
+          const runningProjects = incomingProjects.filter((p: any) => p.status === "pending" || p.status === "analyzing");
+          if (runningProjects.length > 0) {
+            setActiveAnalyses(prev => {
+              const updated = [...prev];
+              let changed = false;
+              runningProjects.forEach((p: any) => {
+                if (!updated.some((a) => a.id === p.id)) {
+                  updated.push({
+                    id: p.id,
+                    name: p.name,
+                    status: p.status,
+                    current_phase: p.current_phase || "Waiting in queue..."
+                  });
+                  changed = true;
+                }
+              });
+              return changed ? updated : prev;
+            });
+          }
+        }
       } catch (err) { console.error("Failed to fetch projects history", err); }
     }
     fetchProjects();

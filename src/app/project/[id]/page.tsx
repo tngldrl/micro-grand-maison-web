@@ -103,6 +103,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState<string | null>(null);
   const [hasUpdate, setHasUpdate] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState<string | null>(null);
   const [translateExtent, setTranslateExtent] = useState<[[number, number], [number, number]] | undefined>(undefined);
 
   // Chat drawer state
@@ -343,6 +344,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
 
   const handleUpdate = async () => {
     setIsReanalyzing(true);
+    setCurrentPhase("Waiting in queue...");
     setHasUpdate(false); // Optimistic reset
     try {
       const token = localStorage.getItem("firebase_token") || "guest";
@@ -360,14 +362,19 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
           });
           if (pollRes.ok) {
             const pollData = await pollRes.json();
+            if (pollData.current_phase) {
+              setCurrentPhase(pollData.current_phase);
+            }
             if (pollData.status === "ready") {
               clearInterval(interval);
               setIsReanalyzing(false);
+              setCurrentPhase(null);
               // Reload the page to re-render fresh architecture data
               window.location.reload();
             } else if (pollData.status === "error") {
               clearInterval(interval);
               setIsReanalyzing(false);
+              setCurrentPhase(null);
               setError("Re-analysis failed on the server.");
             }
           }
@@ -375,6 +382,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
       }, 5000);
     } catch (err: any) {
       setIsReanalyzing(false);
+      setCurrentPhase(null);
       setHasUpdate(true); // Restore if failed
       setError("Failed to trigger re-analysis: " + err.message);
     }
@@ -386,7 +394,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
 
     const userMessage = chatInput.trim();
     setChatInput("");
-    
+
     // Save current memory history to send to backend if user is guest
     const currentMessages = [...chatMessages];
 
@@ -395,7 +403,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
 
     try {
       const token = localStorage.getItem("firebase_token") || "guest";
-      
+
       const payload: any = { message: userMessage };
       if (token === "guest") {
         payload.history = currentMessages;
@@ -429,7 +437,7 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
         {/* Upper line: Project Name & Source Repository */}
         <div className="flex items-center gap-4 flex-wrap">
           <span className="font-bold text-slate-100 text-xl">{projectName || "Loading..."}</span>
-          
+
           {repositories.length > 0 && (
             <span className="text-slate-800 text-lg self-center select-none">|</span>
           )}
@@ -506,7 +514,12 @@ export default function ProjectView({ params }: { params: Promise<{ id: string }
               {error && <p className="text-sm text-red-500 font-medium">Error: {error}</p>}
               {(hasUpdate || isReanalyzing) && (
                 <>
-                  <p className="text-xs text-gray-500">An update is available for this world.</p>
+                  <p className="text-xs text-gray-500">An update is available for this project.</p>
+                  {isReanalyzing && currentPhase && (
+                    <p className="text-xs font-semibold text-blue-600 animate-pulse mt-0.5">
+                      Status: {currentPhase}
+                    </p>
+                  )}
                   <button
                     id="update-project-btn"
                     onClick={handleUpdate}
