@@ -69,6 +69,7 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
   const [user, setUser] = useState<User | null>(null);
   const [projectNotifications, setProjectNotifications] = useState<any[]>([]);
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
+  const [dismissedGitNotifs, setDismissedGitNotifs] = useState<string[]>([]);
   const [newsFeedOpen, setNewsFeedOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -118,6 +119,7 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
   useEffect(() => {
     if (!user) {
       setProjectNotifications([]);
+      setDismissedGitNotifs([]);
       return;
     }
     const savedNotifications = localStorage.getItem(`project_notifications_${user.uid}`);
@@ -129,6 +131,16 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
       }
     } else {
       setProjectNotifications([]);
+    }
+    const savedDismissed = localStorage.getItem(`dismissed_git_notifs_${user.uid}`);
+    if (savedDismissed) {
+      try {
+        setDismissedGitNotifs(JSON.parse(savedDismissed));
+      } catch (e) {
+        setDismissedGitNotifs([]);
+      }
+    } else {
+      setDismissedGitNotifs([]);
     }
   }, [user]);
 
@@ -144,6 +156,14 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
     e.stopPropagation();
     const updated = projectNotifications.filter((n) => n.id !== id);
     updateNotifications(updated);
+  };
+
+  const handleRemoveGitNotification = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    const updated = [...dismissedGitNotifs, id];
+    setDismissedGitNotifs(updated);
+    localStorage.setItem(`dismissed_git_notifs_${user.uid}`, JSON.stringify(updated));
   };
 
   // Poll notifications from localStorage in case dashboard updates it
@@ -220,15 +240,17 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
       message: n.status === "ready" ? "Project analysis completed successfully!" : "Project analysis failed.",
       timestamp: n.timestamp,
     })),
-    ...deliveries.map((d) => ({
-      id: d.id,
-      projectId: undefined,
-      type: "git",
-      title: repoDisplayName(d.repository_url),
-      status: "git",
-      message: `New push to ${d.branch}${d.commit_sha ? ` (${d.commit_sha.substring(0, 7)})` : ""}`,
-      timestamp: d.received_at || new Date().toISOString(),
-    })),
+    ...deliveries
+      .filter((d) => !dismissedGitNotifs.includes(d.id))
+      .map((d) => ({
+        id: d.id,
+        projectId: undefined,
+        type: "git",
+        title: repoDisplayName(d.repository_url),
+        status: "git",
+        message: `New push to ${d.branch}${d.commit_sha ? ` (${d.commit_sha.substring(0, 7)})` : ""}`,
+        timestamp: d.received_at || new Date().toISOString(),
+      })),
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   const isProjectPage = pathname.startsWith("/project/");
@@ -373,14 +395,20 @@ export default function Header({ projectName, activeTab, onTabChange }: HeaderPr
                           <p className="text-xs text-slate-400 mt-0.5">{n.message}</p>
                           <span className="text-[10px] text-slate-500 block mt-1">{timeAgo(n.timestamp)}</span>
                         </div>
-                        {n.type === "project" && (
-                          <button
-                            onClick={(e) => handleRemoveProjectNotification(n.id, e)}
-                            className="text-slate-500 hover:text-red-400 text-xs px-1 font-bold leading-none self-center hover:bg-slate-800 rounded p-1 transition-colors"
-                          >
-                            &times;
-                          </button>
-                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (n.type === "project") {
+                              handleRemoveProjectNotification(n.id, e);
+                            } else if (n.type === "git") {
+                              handleRemoveGitNotification(n.id, e);
+                            }
+                          }}
+                          className="text-slate-500 hover:text-red-400 text-xs px-1 font-bold leading-none self-center hover:bg-slate-800 rounded p-1 transition-colors"
+                          title="Dismiss notification"
+                        >
+                          &times;
+                        </button>
                       </div>
                     ))
                   )}
